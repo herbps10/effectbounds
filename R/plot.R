@@ -25,7 +25,7 @@ plot.atebounds <- function(x, smoothness = x$smoothness[1], point_estimate = FAL
     if(point_estimate == TRUE) ylim <- range(c(x$onestep$lower, x$onestep$upper, ylim))
   }
 
-  graphics::plot(1, type = "n", xlim = range(c(0, x$thresholds)), ylim = ylim, xlab = xlab, ylab = ylab)
+  graphics::plot(1, type = "n", xlim = range(c(0, x$thresholds)), ylim = ylim, xlab = xlab, ylab = ylab, ...)
   graphics::abline(h = 0, col = "gray")
   for(index in indexes) {
     graphics::points(x = x$thresholds, y = x$bounds[[index]]$lower_uniform, pch = 20, col = bounds_color)
