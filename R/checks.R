@@ -34,7 +34,8 @@ assert_smoothness <- checkmate::makeAssertionFunction(check_smoothness)
 
 check_bootstrap <- function(bootstrap, bootstrap_draws) {
   if(TRUE != checkmate::check_logical(bootstrap)) return("bootstrap must be TRUE or FALSE")
-  if(TRUE != checkmate::check_number(bootstrap_draws, lower = 1)) return("bootstrap_draws must be >= 1")
+  if(TRUE != checkmate::check_number(bootstrap_draws, lower = 1)) return("bootstrap_draws must be a number >= 1")
+  TRUE
 }
 assert_bootstrap <- checkmate::makeAssertionFunction(check_bootstrap)
 
