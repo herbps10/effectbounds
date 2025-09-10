@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# effectbounds <img src="man/figures/logo.png" align="right" height="140" />
+# effectbounds <img src="man/figures/logo.png" align="right" height="140" style="display:relative;z-index:1000" />
 
 <!-- badges: start -->
 <!-- badges: end -->
