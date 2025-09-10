@@ -13,10 +13,12 @@ knitr::opts_chunk$set(
 )
 ```
 
-# effectbounds
+# effectbounds <img src="man/figures/logo.png" align="right" height="140" />
 
 <!-- badges: start -->
 <!-- badges: end -->
+
+## Overview
 
 The `effectbounds` package provides tools for estimating non-overlap bounds for causal effects.
 
@@ -34,7 +36,7 @@ devtools::install_github("herbps10/effectbounds")
 ```
 
 ## Example
-```{r example}
+```{r example, warning=FALSE, message=FALSE, out.width = "70%"}
 library(effectbounds)
 
 dat <- simulate_ate_example(seed = 1, N = 5e2, alpha = 3, beta = 0.1, gamma = 1)

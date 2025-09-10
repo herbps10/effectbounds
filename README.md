@@ -1,10 +1,12 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# effectbounds
+# effectbounds <img src="man/figures/logo.png" align="right" height="140" />
 
 <!-- badges: start -->
 <!-- badges: end -->
+
+## Overview
 
 The `effectbounds` package provides tools for estimating non-overlap
 bounds for causal effects.
@@ -46,13 +48,8 @@ bounds <- ate(
   thresholds = c(10^seq(-3, -0.5, 0.1)), 
   smoothness = c(0.005)
 )
-#> Registered S3 method overwritten by 'future':
-#>   method               from      
-#>   all.equal.connection parallelly
-#> Loading required package: nnls
-#> Warning: package 'nnls' was built under R version 4.3.3
 
 plot(bounds, point_estimate = TRUE, main = "Non-overlap ATE Bounds")
 ```
 
-<img src="man/figures/README-example-1.png" width="100%" />
+<img src="man/figures/README-example-1.png" width="70%" />
