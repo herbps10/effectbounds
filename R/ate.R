@@ -6,8 +6,8 @@ ate_onestep <- function(A, Y, nuisance) {
 
   eif <- (A / pi_hat - (1 - A) / (1 - pi_hat)) * (Y - mu_hat) + mu1_hat - mu0_hat
   ate <- mean(eif)
-  lower <- ate + qnorm(0.025) * sd(eif) / sqrt(length(Y))
-  upper <- ate + qnorm(0.975) * sd(eif) / sqrt(length(Y))
+  lower <- ate + stats::qnorm(0.025) * stats::sd(eif) / sqrt(length(Y))
+  upper <- ate + stats::qnorm(0.975) * stats::sd(eif) / sqrt(length(Y))
 
   list(
     ate = ate,
@@ -27,11 +27,11 @@ ate_tmle <- function(A, Y, nuisance) {
   H1 <- -1 / (1 - pi_hat)
   H <- ifelse(A == 1, H1, H0)
 
-  fit <- stats::glm(Y ~ -1 + H + offset(qlogis(mu_hat)), family = "binomial")
+  fit <- stats::glm(Y ~ -1 + H + offset(stats::qlogis(mu_hat)), family = "binomial")
   epsilon <- stats::coef(fit)[1]
 
-  mu0_star <- stats::plogis(qlogis(mu0_hat) + epsilon * H0)
-  mu1_star <- stats::plogis(qlogis(mu1_hat) + epsilon * H1)
+  mu0_star <- stats::plogis(stats::qlogis(mu0_hat) + epsilon * H0)
+  mu1_star <- stats::plogis(stats::qlogis(mu1_hat) + epsilon * H1)
   mu_star <- ifelse(A == 1, mu1_star, mu0_star)
 
   ate <- mean(mu1_hat - mu0_hat)
@@ -129,9 +129,9 @@ tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter
     }
 
     list(
-      mu0 = plogis(qlogis(mu0) - epsilon / (1 - pi) * s_lt(pi, 1 - threshold, smoothness)),
-      mu1 = plogis(qlogis(mu1) + epsilon / pi * s_gt(pi, threshold, smoothness)),
-      pi  = plogis(qlogis(pi)  + epsilon * cleverA)
+      mu0 = stats::plogis(stats::qlogis(mu0) - epsilon / (1 - pi) * s_lt(pi, 1 - threshold, smoothness)),
+      mu1 = stats::plogis(stats::qlogis(mu1) + epsilon / pi * s_gt(pi, threshold, smoothness)),
+      pi  = stats::plogis(stats::qlogis(pi)  + epsilon * cleverA)
     )
   }
 
@@ -157,7 +157,7 @@ tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter
     while(is.infinite(loss(left_bound, mu0_star, mu1_star, pi_star))) left_bound <- left_bound / 2
     while(is.infinite(loss(right_bound, mu0_star, mu1_star, pi_star))) right_bound <- right_bound / 2
 
-    epsilon_star <- optimize(loss, interval = c(left_bound, right_bound), mu0 = mu0_star, mu1 = mu1_star, pi = pi_star)$minimum
+    epsilon_star <- stats::optimize(loss, interval = c(left_bound, right_bound), mu0 = mu0_star, mu1 = mu1_star, pi = pi_star)$minimum
     f <- fluctuation(epsilon_star, mu0_star, mu1_star, pi_star)
 
     mu0_star <- f$mu0
@@ -165,8 +165,6 @@ tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter
     pi_star  <- f$pi
 
     if(verbose) cat(glue::glue("Iter: {iter} epsilon_star: {epsilon_star} smoothness: {smoothness} threshold: {threshold} bounds: ({left_bound}, {right_bound}) \n\n"))
-
-    if(abs(epsilon_star) > 0.5) browser()
 
     if(abs(epsilon_star) < 1e-2) {
       converged <- TRUE
@@ -206,7 +204,7 @@ tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter
     mu0 = mu0_star,
     mu1 = mu1_star,
     pi = pi_star,
-    ci = psi + qnorm(c(0.025, 0.975)) * sd(eif) / sqrt(length(Y))
+    ci = psi + stats::qnorm(c(0.025, 0.975)) * stats::sd(eif) / sqrt(length(Y))
   )
 }
 
@@ -218,7 +216,7 @@ tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter
 #' @param A name of column containing binary treatment indicator
 #' @param Y name of column containing binary outcome variable
 #' @param learners_trt SuperLearner learners to use to estimate propensity score model
-#' @param learners_trt SuperLearner learners to use to estimate outcome model
+#' @param learners_outcome SuperLearner learners to use to estimate outcome model
 #' @param thresholds vector of propensity score thresholds
 #' @param smoothness tuning parameter controlling smoothness of the indicator function approximations (smaller values imply a less smooth approximation)
 #' @param alpha significance level of pointwise and uniform confidence intervals (default 5%)

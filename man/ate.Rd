@@ -30,7 +30,9 @@ ate(
 
 \item{Y}{name of column containing binary outcome variable}
 
-\item{learners_trt}{SuperLearner learners to use to estimate outcome model}
+\item{learners_trt}{SuperLearner learners to use to estimate propensity score model}
+
+\item{learners_outcome}{SuperLearner learners to use to estimate outcome model}
 
 \item{thresholds}{vector of propensity score thresholds}
 

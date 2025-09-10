@@ -25,25 +25,25 @@ plot.atebounds <- function(x, smoothness = x$smoothness[1], point_estimate = FAL
     if(point_estimate == TRUE) ylim <- range(c(x$onestep$lower, x$onestep$upper, ylim))
   }
 
-  plot(1, type = "n", xlim = range(c(0, x$thresholds)), ylim = ylim, xlab = xlab, ylab = ylab)
-  abline(h = 0, col = "gray")
+  graphics::plot(1, type = "n", xlim = range(c(0, x$thresholds)), ylim = ylim, xlab = xlab, ylab = ylab)
+  graphics::abline(h = 0, col = "gray")
   for(index in indexes) {
-    points(x = x$thresholds, y = x$bounds[[index]]$lower_uniform, pch = 20, col = bounds_color)
-    points(x = x$thresholds, y = x$bounds[[index]]$upper_uniform, pch = 20, col = bounds_color)
+    graphics::points(x = x$thresholds, y = x$bounds[[index]]$lower_uniform, pch = 20, col = bounds_color)
+    graphics::points(x = x$thresholds, y = x$bounds[[index]]$upper_uniform, pch = 20, col = bounds_color)
 
-    lines(x = x$thresholds, y = x$bounds[[index]]$lower_uniform, col = bounds_color)
-    lines(x = x$thresholds, y = x$bounds[[index]]$upper_uniform, col = bounds_color)
+    graphics::lines(x = x$thresholds, y = x$bounds[[index]]$lower_uniform, col = bounds_color)
+    graphics::lines(x = x$thresholds, y = x$bounds[[index]]$upper_uniform, col = bounds_color)
   }
 
   bound_title <- glue::glue("Non-overlap {(1 - x$alpha) * 100}% bounds")
 
   if(point_estimate == TRUE) {
-    points(x = 0, y = x$onestep$ate, col = point_estimate_color, pch = 20)
-    lines(x = c(0, 0), y = c(x$onestep$lower, x$onestep$upper), col = point_estimate_color)
+    graphics::points(x = 0, y = x$onestep$ate, col = point_estimate_color, pch = 20)
+    graphics::lines(x = c(0, 0), y = c(x$onestep$lower, x$onestep$upper), col = point_estimate_color)
 
-    if(legend_position != "none") legend(legend_position, c(bound_title, "ATE point estimate and 95% CI"), fill = c(bounds_color, point_estimate_color))
+    if(legend_position != "none") graphics::legend(legend_position, c(bound_title, "ATE point estimate and 95% CI"), fill = c(bounds_color, point_estimate_color))
   }
   else {
-    if(legend_position != "none") legend(legend_position, c(bound_title), fill = c(bounds_color))
+    if(legend_position != "none") graphics::legend(legend_position, c(bound_title), fill = c(bounds_color))
   }
 }

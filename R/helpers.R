@@ -29,7 +29,7 @@ onestep <- function(plugin, eif) plugin + mean(eif)
 # @param N sample size
 # @param alpha significance level
 ci <- function(estimate, eif, N, alpha = 0.05) {
-  estimate + qnorm(c(alpha / 2, 1 - alpha / 2)) * sd(eif) / sqrt(N)
+  estimate + stats::qnorm(c(alpha / 2, 1 - alpha / 2)) * stats::sd(eif) / sqrt(N)
 }
 
 # Apply multiplier bootstrap for lower and upper effect bounds
@@ -44,12 +44,12 @@ multiplier_bootstrap <- function(lower, upper, eif_lower, eif_upper, draws = 1e3
   N <- nrow(eif_lower)
   K <- ncol(eif_lower)
 
-  se_lower <- apply(eif_lower, 2, sd) |> matrix(ncol = K, nrow = N, byrow = TRUE)
-  se_upper <- apply(eif_upper, 2, sd) |> matrix(ncol = K, nrow = N, byrow = TRUE)
+  se_lower <- apply(eif_lower, 2, stats::sd) |> matrix(ncol = K, nrow = N, byrow = TRUE)
+  se_upper <- apply(eif_upper, 2, stats::sd) |> matrix(ncol = K, nrow = N, byrow = TRUE)
   eif_lower_scaled <- eif_lower / se_lower
   eif_upper_scaled <- eif_upper / se_upper
 
-  zs <- matrix(2 * rbinom(draws * N, 1, 0.5) - 1, nrow = N, ncol = draws)
+  zs <- matrix(2 * stats::rbinom(draws * N, 1, 0.5) - 1, nrow = N, ncol = draws)
 
   T_lower <- lapply(1:draws, \(draw) colSums(zs[, draw] * eif_lower_scaled) / sqrt(N))
   T_upper <- lapply(1:draws, \(draw) colSums(zs[, draw] * eif_upper_scaled) / sqrt(N))
@@ -59,10 +59,10 @@ multiplier_bootstrap <- function(lower, upper, eif_lower, eif_upper, draws = 1e3
   max_max <- unlist(lapply(T_max, max, na.rm = TRUE))
 
   # Critical value
-  calpha <- quantile(max_max, 1 - alpha)
+  calpha <- stats::quantile(max_max, 1 - alpha)
 
   matrix(c(
-    lower - calpha * apply(eif_lower, 2, sd) / sqrt(N),
-    upper + calpha * apply(eif_upper, 2, sd) / sqrt(N)
+    lower - calpha * apply(eif_lower, 2, stats::sd) / sqrt(N),
+    upper + calpha * apply(eif_upper, 2, stats::sd) / sqrt(N)
   ), ncol = 2, nrow = K, byrow = FALSE)
 }
