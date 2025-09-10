@@ -56,3 +56,20 @@ object with class "atebounds"
 \description{
 Estimate non-overlap bounds for the Average Treatment Effect (ATE)
 }
+\examples{
+dat <- simulate_ate_example(
+  seed = 1,
+  N = 5e2,
+  alpha = 3,
+  beta = 0.1,
+  gamma = 1
+)
+
+bounds <- ate(
+  dat,
+  X = c("X1", "X2"), A = "A", Y = "Y",
+  thresholds = c(10^seq(-3, -0.5, 0.1)),
+  smoothness = c(0.005)
+)
+
+}

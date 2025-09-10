@@ -228,6 +228,22 @@ tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter
 #'
 #' @return object with class "atebounds"
 #'
+#' @examples
+#' dat <- simulate_ate_example(
+#'   seed = 1,
+#'   N = 5e2,
+#'   alpha = 3,
+#'   beta = 0.1,
+#'   gamma = 1
+#' )
+#'
+#' bounds <- ate(
+#'   dat,
+#'   X = c("X1", "X2"), A = "A", Y = "Y",
+#'   thresholds = c(10^seq(-3, -0.5, 0.1)),
+#'   smoothness = c(0.005)
+#' )
+#'
 #' @export
 ate <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outcome = c("SL.glm"), thresholds = c(10^seq(-4, -1, 0.05)), smoothness = 1e-2, alpha = 0.05, outer_folds = 5, inner_folds = 5, bootstrap = TRUE, bootstrap_draws = 1e3, nuisance = NULL) {
   assert_ate_data(data, X, A, Y)
