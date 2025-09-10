@@ -1,5 +1,5 @@
 ---
-title: "average_treatment_effect"
+title: "Estimating non-overlap bounds for the Average Treatment Effect"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{average_treatment_effect}
@@ -14,22 +14,59 @@ knitr::opts_chunk$set(
 )
 ```
 
+This vignette uses the `effectbounds` package to estimate non-overlap bounds for the Average Treatment Effect (ATE). 
+
+First, load the `effectbounds` package.
 ```{r setup}
 library(effectbounds)
 ```
 
+The package comes with a function for simulating example data. 
 ```{r data}
 dat <- simulate_ate_example(seed = 1, N = 5e2, alpha = 3, beta = 0.1, gamma = 1)
 ```
 
-```{r bounds}
-bounds <- ate(dat, X = c("X1", "X2"), A = "A", Y = "Y", thresholds = c(10^seq(-3, -0.5, 0.1)), smoothness = c(0.005))
+The simulated data has four columns: `X1` and `X2` are covariates, `A` is a binary treatment indicator (where `A = 1` indicates treatment, and `A = 0` control), and `Y` a binary outcome.
+```{r dathead}
+head(dat, n = 5)
 ```
 
-```{r}
+As an exploratory analysis, let's estimate the propensity scores using a logistic regression model.
+```{r pscore}
+propensity_score_model <- glm(A ~ X1 + X2, data = dat, family = "binomial")
+propensity_scores <- predict(propensity_score_model, type = "response")
+```
+
+Now we can plot the propensity scores to get a sense of the overlap between treatment and control groups in the simulated dataset. It's also useful to look at the _inverse_ of the estimated propensity scores, so we'll plot both.
+```{r pscore_histogram, out.width = "100%", fig.dim = c(8, 3)}
+par(mfrow = c(1, 2))
+hist(propensity_scores, main = "Propensity scores")
+hist(1 / propensity_scores, main = "Inverse propensity scores")
+par(mfrow = c(1, 1))
+```
+
+Another way to visualize the propensity scores is to look at their inverse:
+```{r inv_pscore_histogram, out.width = "50%"}
+```
+The large inverse propensity scores are a sign that there is practical non-overlap in the dataset.
+
+The `ate` function estimates the non-overlap bounds for the ATE. 
+```{r bounds, warning = FALSE, message=FALSE}
+bounds <- ate(
+  dat, 
+  X = c("X1", "X2"), A = "A", Y = "Y", 
+  thresholds = c(10^seq(-3, -0.5, 0.1)), 
+  smoothness = c(0.005)
+)
+```
+
+You can use the `summary` function to see the point estimate for the ATE, information about the estimated propensity scores, and a summary of the estimated non-overlap bounds. 
+```{r bounds_summary}
 summary(bounds)
 ```
+The summary tells us that the doubly-robust estimator for the ATE has a 95% confidence interval that covers zero. However, the shortest uniform 95\% confidence interval for the non-overlap bounds does not include zero. 
 
-```{r}
-plot(bounds, point_estimate = TRUE)
+The package also includes a `plot` function for plotting the non-overlap bounds. By default, the point estimate of the ATE isn't shown; we set `point_estimate = TRUE` here so we can compare the non-overlap bounds to the point estimate and its 95% confidence interval.
+```{r bounds_plot, out.width = "100%", fig.dim = c(8, 6)}
+plot(bounds, point_estimate = TRUE, main = "Non-overlap ATE Bounds")
 ```
