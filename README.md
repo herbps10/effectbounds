@@ -1,9 +1,11 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# effectbounds <img src="man/figures/logo.png" align="right" height="140" style="display:relative;z-index:1000" />
+# effectbounds <img src="man/figures/logo.png" align="right" height="140" />
 
 <!-- badges: start -->
+
+[![R-CMD-check](https://github.com/herbps10/effectbounds/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/herbps10/effectbounds/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 ## Overview
