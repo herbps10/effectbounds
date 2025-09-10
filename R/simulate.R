@@ -1,0 +1,22 @@
+#' Simulate from a simple illustrative data-generating process designed
+#' to illustrate ATE non-overlap bounds
+#'
+#' @param seed random number seed
+#' @param N number of observations
+#' @param alpha strength of non-overlap violations (higher alpha implies more extreme non-overlap violation)
+#' @param beta proportion of population subject to non-overlap violation
+#' @param gamma controls magnitude of the effect
+#'
+#' @return data frame with columns X1, X2, A, and Y
+#'
+#' @export
+simulate_ate_example <- function(seed = 1, N = 1e3, alpha = 1, beta = 0.05, gamma = 1) {
+  set.seed(seed)
+  X1 <- stats::runif(N, -1, 1)
+  x  <- stats::runif(N)
+  X2 <- ifelse(x < beta / 2, -1, ifelse(x > 1 - beta / 2, 1, 0))
+  A  <- stats::rbinom(N, 1, stats::plogis(X1 + alpha * X2))
+  Y  <- stats::rbinom(N, 1, stats::plogis(X1 + (A - 0.5) * gamma))
+
+  data.frame(X1 = X1, X2 = X2, A = A, Y = Y)
+}
