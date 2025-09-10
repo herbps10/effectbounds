@@ -8,7 +8,7 @@ Description: This package estimates bounds on causal effects, such as the averag
   treatment effect, using observational or experimental data. The bounds do not
   require overlap (also known as positivity or covariate balance), making them useful for
   cases where traditional estimators may perform poorly.
-License: LICENSE
+License: Apache License (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
