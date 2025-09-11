@@ -208,23 +208,73 @@ tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter
   )
 }
 
-
 #' Estimate non-overlap bounds for the Average Treatment Effect (ATE)
 #'
 #' @param data data frame containing data estimating ATE bounds
 #' @param X vector of covariate column names
 #' @param A name of column containing binary treatment indicator
 #' @param Y name of column containing binary outcome variable
-#' @param learners_trt SuperLearner learners to use to estimate propensity score model
-#' @param learners_outcome SuperLearner learners to use to estimate outcome model
+#' @param learners_trt SuperLearner learners to use to estimate propensity
+#' score model. Use SuperLearner::listWrappers() to see list of available
+#' learners.
+#' @param learners_outcome SuperLearner learners to use to estimate outcome
+#' model. Use SuperLearner::listWrappers() to see list of available learners.
 #' @param thresholds vector of propensity score thresholds
-#' @param smoothness tuning parameter controlling smoothness of the indicator function approximations (smaller values imply a less smooth approximation)
-#' @param alpha significance level of pointwise and uniform confidence intervals (default 5%)
+#' @param smoothness tuning parameter controlling smoothness of the indicator
+#' unction approximations (smaller values imply a less smooth approximation)
+#' @param alpha significance level of pointwise and
+#' uniform confidence intervals (default 5%)
 #' @param outer_folds Number of folds in outer cross-fitting loop
-#' @param inner_folds Number of folds used by SuperLearner within each outer cross-fitting loop
-#' @param bootstrap whether to use multiplier bootstrap to compute uniform confidence sets
+#' @param inner_folds Number of folds used by SuperLearner within
+#' each outer cross-fitting loop
+#' @param bootstrap whether to use multiplier bootstrap to compute
+#'  uniform confidence sets
 #' @param bootstrap_draws number of multiplier bootstrap draws
 #' @param nuisance list containing estimated nuisance parameters (optional)
+#'
+#' @details
+#' This function estimates non-overlap bounds for the ATE on a
+#' user-specified grid of propensity score thresholds and smoothness
+#' tuning parameter values.
+#'
+#' The basic idea of non-overlap bounds is to divide the population into
+#' two parts: a subpopulation in which overlap is satisfied, and a subpopulation
+#' in which overlap is violated. The propensity score thresholds defines how the
+#' division is done: all units with estimated propensity score below the
+#' threshold are considered to be in the non-overlap subpopulation, and the rest
+#' of the units are considered to be in the overlap subpopulation.
+#'
+#' A-priori, we don't typically know what propensity score threshold will lead
+#' to the tightest bounds on the ATE. Therefore, we try a range of values
+#' (using the \code{threshold} argument), and the function uses a multiplier
+#' bootstrap technique to form a uniform confidence set. You can configure the
+#' multiplier bootstrap through the \code{bootstrap_draws}
+#' argument, which sets how many bootstrap replications to use.
+#'
+#' By default, 95% uniform confidence sets are formed. You can configure the
+#' significance level with the \code{alpha} argument; the uniform confidence
+#' sets are designed to be valid with probability \eqn{(1 - alpha) * 100\%}.
+#'
+#' The propensity scores and outcome regression models needed to estimate the
+#' bounds can be estimated using any method, including logistic regressions or
+#' flexible machine-learning algorithms. To control over-fitting, we use
+#' sample-splitting methods. There is an outer layer of cross-fitting,
+#' in which the sample is split into folds (you can set how many using the
+#' \code{outer_folds} argument), models are fit on the training sample for each
+#' fold, and propensity scores and conditional mean outcomes are predicted on
+#' the validation sample. Within each of these outer folds, \code{SuperLearner}
+#' is used to form an ensemble of learners to optimally predict the propensity
+#' scores and conditional mean outcomes. \code{SuperLearner} itself uses
+#' cross-validation to estimate the performance of each learner, and you can
+#' configure the number of cross-validation folds using the \code{inner_folds}
+#' argument.
+#'
+#' An important tuning parameter is the \code{smoothness} argument, which
+#' controls the smoothness of an inner approximation of certain indicator
+#' functions that arise in the definition of the non-overlap bounds. In practice,
+#' a small value (like \code{10e-2}) can typically be used. We
+#' recommend trying several small values, like \code{10e-3}, \code{10e-2},
+#' and \code{10e-1} in a sensitivity analysis.
 #'
 #' @return object with class "atebounds"
 #'
