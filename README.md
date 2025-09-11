@@ -54,3 +54,13 @@ plot(bounds, point_estimate = TRUE, main = "Non-overlap ATE Bounds")
 ```
 
 <img src="man/figures/README-example-1.png" width="70%" />
+
+The plot shows the non-overlap bounds (the black points) on the ATE axis
+for a range of *propensity score thresholds*. bounds are *uniform 95%
+confidence intervals*: this means you can pick any of the intervals, for
+any choice of threshold, and interpret it as a valid 95% confidence
+interval (CI) for the ATE.
+
+The plot also shows a point estimate (the blue dot) and 95% CI (the blue
+line) for the ATE. The non-overlap bounds are, for the right choice of
+threshold, *shorter* than the 95% CI for the ATE point estimate.
