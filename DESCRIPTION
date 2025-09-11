@@ -4,10 +4,7 @@ Version: 0.0.0.9000
 Authors@R: 
     person("Herbert", "Susmann", , "herbps10@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-3540-8255"))
-Description: This package estimates bounds on causal effects, such as the average
-  treatment effect, using observational or experimental data. The bounds do not
-  require overlap (also known as positivity or covariate balance), making them useful for
-  cases where traditional estimators may perform poorly.
+Description: Non-parametric estimators of non-overlap bounds of causal effects, providing asymptotically valid bounds even when overlap (also known as positivity) does not hold. Uncertainty intervals robust to lack of covariate overlap are estimated using a multiplier bootstrap technique. Ensemble methods are used to estimate propensity score and outcome models.
 License: Apache License (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
