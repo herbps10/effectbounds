@@ -23,7 +23,7 @@ estimated probability of receiving the treatment (or control), then
 estimators of the causal effect can perform poorly.
 
 Non-overlap bounds are an approach for estimating causal effects even
-when non-overlap is violated, by focusing on estimating *bounds* on the
+when overlap is violated, by focusing on estimating *bounds* on the
 effect.
 
 ## Installation
