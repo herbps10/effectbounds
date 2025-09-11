@@ -253,11 +253,11 @@ tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter
 #'
 #' By default, 95% uniform confidence sets are formed. You can configure the
 #' significance level with the \code{alpha} argument; the uniform confidence
-#' sets are designed to be valid with probability \eqn{(1 - alpha) * 100\%}.
+#' sets are designed to be valid with probability \eqn{(1 - \alpha) \times 100\%}.
 #'
 #' The propensity scores and outcome regression models needed to estimate the
 #' bounds can be estimated using any method, including logistic regressions or
-#' flexible machine-learning algorithms. To control over-fitting, we use
+#' flexible machine-learning algorithms. To control overfitting, we use
 #' sample-splitting methods. There is an outer layer of cross-fitting,
 #' in which the sample is split into folds (you can set how many using the
 #' \code{outer_folds} argument), models are fit on the training sample for each
@@ -276,7 +276,21 @@ tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter
 #' recommend trying several small values, like \code{10e-3}, \code{10e-2},
 #' and \code{10e-1} in a sensitivity analysis.
 #'
-#' @return object with class "atebounds"
+#' @return object with class "atebounds". An atebounds object is a list with
+#' the following elements:
+#' \describe{
+#'  \item{bounds}{List containing estimated bounds for each smoothness parameter.}
+#'  \item{smoothness}{Vector of smoothness parameters.}
+#'  \item{thresholds}{Vector of propensity score thresholds.}
+#'  \item{onestep}{Doubly-robust one-step point estimate and confidence interval for ATE.}
+#'  \item{alpha}{Significance level.}
+#'  \item{N}{Number of observations.}
+#'  \item{K}{Number of propensity score thresholds.}
+#'  \item{nuisance}{propensity score and conditional mean outcome predictions.}
+#' }
+#'
+#' @seealso [summary.atebounds]
+#' @seealso [plot.atebounds]
 #'
 #' @examples
 #' dat <- simulate_ate_example(
@@ -287,7 +301,7 @@ tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter
 #'   gamma = 1
 #' )
 #'
-#' bounds <- bounds_ate(
+#' bounds <- ate_bounds(
 #'   dat,
 #'   X = c("X1", "X2"), A = "A", Y = "Y",
 #'   thresholds = c(10^seq(-3, -0.5, 0.1)),
@@ -295,7 +309,7 @@ tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter
 #' )
 #'
 #' @export
-bounds_ate <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outcome = c("SL.glm"), thresholds = c(10^seq(-4, -1, 0.05)), smoothness = 1e-2, alpha = 0.05, outer_folds = 5, inner_folds = 5, bootstrap = TRUE, bootstrap_draws = 1e3, nuisance = NULL) {
+ate_bounds <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outcome = c("SL.glm"), thresholds = c(10^seq(-4, -1, 0.05)), smoothness = 1e-2, alpha = 0.05, outer_folds = 5, inner_folds = 5, bootstrap = TRUE, bootstrap_draws = 1e3, nuisance = NULL) {
   assert_ate_data(data, X, A, Y)
   assert_folds(outer_folds)
   assert_folds(inner_folds)

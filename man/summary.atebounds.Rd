@@ -2,7 +2,7 @@
 % Please edit documentation in R/summary.R
 \name{summary.atebounds}
 \alias{summary.atebounds}
-\title{Summarize ATE non-overlap bounds}
+\title{Summarize ATE non-overlap bounds.}
 \usage{
 \method{summary}{atebounds}(object, ...)
 }
@@ -12,5 +12,5 @@
 \item{...}{additional arguments}
 }
 \description{
-Summarize ATE non-overlap bounds
+Summarize ATE non-overlap bounds.
 }

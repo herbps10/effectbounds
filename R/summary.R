@@ -1,4 +1,4 @@
-#' Summarize ATE non-overlap bounds
+#' Summarize ATE non-overlap bounds.
 #' @param object object of type "atebounds"
 #' @param ... additional arguments
 #' @export
@@ -11,10 +11,8 @@ summary.atebounds <- function(object, ...) {
   )
 
   for(index in seq_along(object$smoothness)) {
-    si <- which.min(object$bounds[[index]]$upper_uniform - object$bounds[[index]]$lower_uniform)
-    shortest_intervals$threshold[index] <- object$thresholds[si[]]
-    shortest_intervals$lower_uniform[index] <- object$bounds[[index]]$lower_uniform[si]
-    shortest_intervals$upper_uniform[index] <- object$bounds[[index]]$upper_uniform[si]
+    shortest_intervals$lower_uniform[index] <- max(object$bounds[[index]]$lower_uniform)
+    shortest_intervals$upper_uniform[index] <- min(object$bounds[[index]]$upper_uniform)
   }
 
   out <- list(
@@ -52,7 +50,6 @@ print.summary.atebounds <- function(x, ...) {
     s <- x$shortest_intervals$smoothness[index]
     l <- format(x$shortest_intervals$lower_uniform[index], digits = 3)
     u <- format(x$shortest_intervals$upper_uniform[index], digits = 3)
-    threshold <- format(x$shortest_intervals$threshold[index], digits = 3)
-    cat(glue::glue("{s} \t\t ({l}, {u}) with threshold {threshold} \n\n"))
+    cat(glue::glue("{s} \t\t ({l}, {u}) \n\n"))
   }
 }

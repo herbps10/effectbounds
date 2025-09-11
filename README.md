@@ -23,12 +23,12 @@ estimated probability of receiving the treatment (or control), then
 estimators of the causal effect can perform poorly.
 
 Non-overlap bounds are an approach for estimating causal effects even
-when overlap is violated, by focusing on estimating *bounds* on the
+when non-overlap is violated, by focusing on estimating *bounds* on the
 effect.
 
 ## Installation
 
-You can install the development version of `effectbounds` from
+You can install the development version of effectbounds from
 [GitHub](https://github.com/herbps10/effectbounds):
 
 ``` r
@@ -46,7 +46,7 @@ library(effectbounds)
 
 dat <- simulate_ate_example(seed = 1, N = 5e2, alpha = 3, beta = 0.1, gamma = 1)
 
-bounds <- bounds_ate(
+bounds <- ate_bounds(
   dat, 
   X = c("X1", "X2"), A = "A", Y = "Y", 
   thresholds = c(10^seq(-3, -0.5, 0.1)), 
