@@ -2,15 +2,27 @@
 % Please edit documentation in R/summary.R
 \name{summary.atebounds}
 \alias{summary.atebounds}
+\alias{print.summary.atebounds}
 \title{Summarize ATE non-overlap bounds.}
 \usage{
 \method{summary}{atebounds}(object, ...)
+
+\method{print}{summary.atebounds}(x, ...)
 }
 \arguments{
-\item{object}{object of type "atebounds"}
+\item{...}{additional arguments (not used)}
 
-\item{...}{additional arguments}
+\item{x}{list with class \code{summary.atebounds}}
+
+\item{list}{with class \code{atebounds}}
+}
+\value{
+list with class \code{summary.atebounds}
+
+printed summary of ATE non-overlap bounds
 }
 \description{
 Summarize ATE non-overlap bounds.
+
+Print summary of non-overlap bounds for ATE.
 }

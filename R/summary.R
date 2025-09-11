@@ -1,6 +1,11 @@
 #' Summarize ATE non-overlap bounds.
-#' @param object object of type "atebounds"
-#' @param ... additional arguments
+#'
+#' @param list with class \code{atebounds}
+#' @param ... additional arguments (not used)
+#'
+#' @return list with class \code{summary.atebounds}
+#' @name summary.atebounds
+#'
 #' @export
 summary.atebounds <- function(object, ...) {
   shortest_intervals <- data.frame(
@@ -25,9 +30,13 @@ summary.atebounds <- function(object, ...) {
   out
 }
 
-#' Print ATE non-overlap bounds summary
-#' @param x object of class "summary.atebounds"
-#' @param ... additional arguments
+#' Print summary of non-overlap bounds for ATE.
+#' @param x list with class \code{summary.atebounds}
+#' @param ... additional arguments (not used)
+#'
+#' @return printed summary of ATE non-overlap bounds
+#' @name summary.atebounds
+#'
 #' @export
 print.summary.atebounds <- function(x, ...) {
   cli::cli_text("{.strong Summary: ATE non-overlap bounds}")

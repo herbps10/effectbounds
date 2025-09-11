@@ -214,11 +214,10 @@ tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter
 #' @param X vector of covariate column names
 #' @param A name of column containing binary treatment indicator
 #' @param Y name of column containing binary outcome variable
-#' @param learners_trt SuperLearner learners to use to estimate propensity
-#' score model. Use SuperLearner::listWrappers() to see list of available
-#' learners.
-#' @param learners_outcome SuperLearner learners to use to estimate outcome
-#' model. Use SuperLearner::listWrappers() to see list of available learners.
+#' @param learners_trt SuperLearner learners for estimating propensity
+#' score model.
+#' @param learners_outcome SuperLearner learners for estimtaing outcome
+#' model.
 #' @param thresholds vector of propensity score thresholds
 #' @param smoothness tuning parameter controlling smoothness of the indicator
 #' unction approximations (smaller values imply a less smooth approximation)
@@ -269,6 +268,10 @@ tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter
 #' configure the number of cross-validation folds using the \code{inner_folds}
 #' argument.
 #'
+#' You can use the function \code{SuperLearner::listWrappers} for a list of the
+#' algorithms available for inclusion in the \code{learners_trt} and
+#' \code{learners_outcome} arguments.
+#'
 #' An important tuning parameter is the \code{smoothness} argument, which
 #' controls the smoothness of an inner approximation of certain indicator
 #' functions that arise in the definition of the non-overlap bounds. In practice,
@@ -276,8 +279,7 @@ tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter
 #' recommend trying several small values, like \code{10e-3}, \code{10e-2},
 #' and \code{10e-1} in a sensitivity analysis.
 #'
-#' @return object with class "atebounds". An atebounds object is a list with
-#' the following elements:
+#' @return A list of class \code{atebounds} containing the following elements:
 #' \describe{
 #'  \item{bounds}{List containing estimated bounds for each smoothness parameter.}
 #'  \item{smoothness}{Vector of smoothness parameters.}
@@ -291,6 +293,8 @@ tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter
 #'
 #' @seealso [summary.atebounds]
 #' @seealso [plot.atebounds]
+#'
+#' @name ate_bounds
 #'
 #' @examples
 #' dat <- simulate_ate_example(
