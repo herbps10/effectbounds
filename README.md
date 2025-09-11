@@ -28,7 +28,7 @@ effect.
 
 ## Installation
 
-You can install the development version of effectbounds from
+You can install the development version of `effectbounds` from
 [GitHub](https://github.com/herbps10/effectbounds):
 
 ``` r
