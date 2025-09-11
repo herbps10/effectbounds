@@ -16,16 +16,15 @@ bounds for causal effects.
 The identification of causal effects typically relies on the *overlap
 assumption* (also known as *positivity*), which requires that all units
 have a positive probability of being in either the treatment or control
-group. When overlap is structurally violated, with some units having
-zero probability of receiving the treatment (or control), then causal
-effects are un-identified. When overlap is practically violated, with
-some units having very small probability of receiving the treatment (or
-control), then traditional causal inference estimators may have poor
-finite-sample performance.
+group.
+
+When overlap fails in finite-samples, with some units having very small
+estimated probability of receiving the treatment (or control), then
+estimators of the causal effect can perform poorly.
 
 Non-overlap bounds are an approach for estimating causal effects even
 when non-overlap is violated, by focusing on estimating *bounds* on the
-effect rather than its precise value.
+effect.
 
 ## Installation
 
