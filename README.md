@@ -38,6 +38,9 @@ devtools::install_github("herbps10/effectbounds")
 
 ## Example
 
+The example estimates uniform 95% non-overlap bounds for the ATE using
+simulated data.
+
 ``` r
 library(effectbounds)
 
