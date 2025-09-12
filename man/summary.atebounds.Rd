@@ -10,11 +10,11 @@
 \method{print}{summary.atebounds}(x, ...)
 }
 \arguments{
+\item{object}{list with class \code{atebounds}}
+
 \item{...}{additional arguments (not used)}
 
 \item{x}{list with class \code{summary.atebounds}}
-
-\item{list}{with class \code{atebounds}}
 }
 \value{
 list with class \code{summary.atebounds}

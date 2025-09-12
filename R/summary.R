@@ -1,6 +1,6 @@
 #' Summarize ATE non-overlap bounds.
 #'
-#' @param list with class \code{atebounds}
+#' @param object list with class \code{atebounds}
 #' @param ... additional arguments (not used)
 #'
 #' @return list with class \code{summary.atebounds}
