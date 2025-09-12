@@ -61,7 +61,7 @@ uniform confidence sets}
 
 \item{x}{list with class \code{atebounds}}
 
-\item{...}{additional arguments (not used)}
+\item{...}{additional arguments for print.atebounds (not used)}
 }
 \value{
 A list of class \code{atebounds} containing the following elements:
@@ -75,8 +75,6 @@ A list of class \code{atebounds} containing the following elements:
 \item{K}{Number of propensity score thresholds.}
 \item{nuisance}{propensity score and conditional mean outcome predictions.}
 }
-
-printed \code{atebounds} object.
 }
 \description{
 Estimate non-overlap bounds for the Average Treatment Effect (ATE)

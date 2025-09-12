@@ -363,22 +363,39 @@ ate_bounds <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outco
       upper_ci[index, 2]   <- tmle_upper$ci[2]
     }
 
-    # Multiplier bootstrap
-    uniform_ci <- matrix(NA, K, 2)
-    if(bootstrap == TRUE) {
-      uniform_ci <- multiplier_bootstrap(lower, upper, lower_eif, upper_eif, draws = bootstrap_draws, alpha = alpha)
-    }
-
     list(
+      thresholds = thresholds,
       lower = lower,
       upper = upper,
+      lower_eif = lower_eif,
+      upper_eif = upper_eif,
       lower_pointwise = lower_ci[, 1],
-      upper_pointwise = upper_ci[, 2],
-      lower_uniform = uniform_ci[, 1],
-      upper_uniform = uniform_ci[, 2],
-      thresholds = thresholds
+      upper_pointwise = upper_ci[, 2]
     )
   })
+
+  uniform_critical_value <- NA
+  if(bootstrap == TRUE) {
+    # Multiplier bootstrap
+
+    uniform_ci <- matrix(NA, K * length(smoothness), 2)
+
+    # Combine point estimates and EIFs from all smoothness options into combined vectors/matrices
+    lower <- unlist(lapply(results, `[[`, "lower"))
+    upper <- unlist(lapply(results, `[[`, "upper"))
+    lower_eif <- do.call(cbind, lapply(results, `[[`, "lower_eif"))
+    upper_eif <- do.call(cbind, lapply(results, `[[`, "upper_eif"))
+
+    uniform_ci <- multiplier_bootstrap(lower, upper, lower_eif, upper_eif, draws = bootstrap_draws, alpha = alpha)
+
+    uniform_critical_value <- uniform_ci$critical_value
+
+    for(index in seq_along(smoothness)) {
+      ri <- ((index - 1) * K + 1):(index * K)
+      results[[index]]$lower_uniform <- uniform_ci$ci[ri, 1]
+      results[[index]]$upper_uniform <- uniform_ci$ci[ri, 2]
+    }
+  }
 
   out <- list(
     bounds = results,
@@ -386,6 +403,7 @@ ate_bounds <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outco
     thresholds = thresholds,
     onestep = ate_onestep(data[[A]], data[[Y]], nuisance),
     alpha = alpha,
+    uniform_critical_value = uniform_critical_value,
     N = N,
     K = K,
     nuisance = nuisance

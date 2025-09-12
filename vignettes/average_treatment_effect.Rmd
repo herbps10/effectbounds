@@ -52,11 +52,12 @@ The large inverse propensity scores are a sign that there is practical non-overl
 
 The `ate` function estimates the non-overlap bounds for the ATE. 
 ```{r bounds, warning = FALSE, message=FALSE}
+set.seed(10016)
 bounds <- ate_bounds(
   dat, 
   X = c("X1", "X2"), A = "A", Y = "Y", 
-  thresholds = c(10^seq(-3, -0.5, 0.1)), 
-  smoothness = c(0.005)
+  thresholds = c(10^seq(-2, -0.1, 0.1)), 
+  smoothness = c(0.01)
 )
 ```
 

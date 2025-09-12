@@ -16,30 +16,35 @@ s_lt_dot <- function(x, t, gamma) {
   ifelse(x <= t - gamma, 0, ifelse(x >= t, 0, 2 * gamma^2 * exp(1 / ((t - x)^2 / gamma^2 - 1) + 1) * (x - t) / (gamma^2 - (t - x)^2)^2))
 }
 
-# Compute one-step estimator for one-dimensional target parameter
-#
-# @param plugin plugin point estimate
-# @param eif EIF vector
+#' Compute one-step estimator for one-dimensional target parameter
+#'
+#' @param plugin plugin point estimate
+#' @param eif EIF vector
+#' @noRd
 onestep <- function(plugin, eif) plugin + mean(eif)
 
-# Compute CI from influence function estimate
-#
-# @param estimate point estimtae
-# @param eif estimate of EIF (vector)
-# @param N sample size
-# @param alpha significance level
+#' Compute CI from influence function estimate
+#'
+#' @param estimate point estimtae
+#' @param eif estimate of EIF (vector)
+#' @param N sample size
+#' @param alpha significance level
+#'
+#' @noRd
 ci <- function(estimate, eif, N, alpha = 0.05) {
   estimate + stats::qnorm(c(alpha / 2, 1 - alpha / 2)) * stats::sd(eif) / sqrt(N)
 }
 
-# Apply multiplier bootstrap for lower and upper effect bounds
-#
-# @param lower point estimates of lower bound for set of propensity score thresholds (vector)
-# @param upper point estimates of upper bound for set of propensity score thresholds (vector)
-# @param eif_lower efficient influence function estimates for lower bound (matrix)
-# @param eif_upper efficient influence function estimates for upper bound (matrix)
-# @param draws number of bootstrap values
-# @param alpha significance level, leading to (1 - alpha)% uniform confidence set
+#' Apply multiplier bootstrap for lower and upper effect bounds
+#'
+#' @param lower point estimates of lower bound for set of propensity score thresholds (vector)
+#' @param upper point estimates of upper bound for set of propensity score thresholds (vector)
+#' @param eif_lower efficient influence function estimates for lower bound (matrix)
+#' @param eif_upper efficient influence function estimates for upper bound (matrix)
+#' @param draws number of bootstrap values
+#' @param alpha significance level, leading to (1 - alpha)% uniform confidence set
+#'
+#' @noRd
 multiplier_bootstrap <- function(lower, upper, eif_lower, eif_upper, draws = 1e3, alpha = 0.05) {
   N <- nrow(eif_lower)
   K <- ncol(eif_lower)
@@ -61,8 +66,11 @@ multiplier_bootstrap <- function(lower, upper, eif_lower, eif_upper, draws = 1e3
   # Critical value
   calpha <- stats::quantile(max_max, 1 - alpha)
 
-  matrix(c(
-    lower - calpha * apply(eif_lower, 2, stats::sd) / sqrt(N),
-    upper + calpha * apply(eif_upper, 2, stats::sd) / sqrt(N)
-  ), ncol = 2, nrow = K, byrow = FALSE)
+  list(
+    ci = matrix(c(
+      lower - calpha * apply(eif_lower, 2, stats::sd) / sqrt(N),
+      upper + calpha * apply(eif_upper, 2, stats::sd) / sqrt(N)
+    ), ncol = 2, nrow = K, byrow = FALSE),
+    critical_value = calpha
+  )
 }
