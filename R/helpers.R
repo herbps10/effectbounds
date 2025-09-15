@@ -51,8 +51,10 @@ multiplier_bootstrap <- function(lower, upper, eif_lower, eif_upper, draws = 1e3
 
   se_lower <- apply(eif_lower, 2, stats::sd) |> matrix(ncol = K, nrow = N, byrow = TRUE)
   se_upper <- apply(eif_upper, 2, stats::sd) |> matrix(ncol = K, nrow = N, byrow = TRUE)
-  eif_lower_scaled <- eif_lower / se_lower
-  eif_upper_scaled <- eif_upper / se_upper
+  mean_lower <- apply(eif_lower, 2, mean) |> matrix(ncol = K, nrow = N, byrow = TRUE)
+  mean_upper <- apply(eif_upper, 2, mean) |> matrix(ncol = K, nrow = N, byrow = TRUE)
+  eif_lower_scaled <- (eif_lower - mean_lower) / se_lower
+  eif_upper_scaled <- (eif_upper - mean_upper) / se_upper
 
   zs <- matrix(2 * stats::rbinom(draws * N, 1, 0.5) - 1, nrow = N, ncol = draws)
 
