@@ -53,7 +53,7 @@ bounds <- ate_bounds(
   smoothness = c(0.005)
 )
 
-plot(bounds, point_estimate = TRUE, main = "Non-overlap ATE Bounds")
+plot(bounds, point_estimate = TRUE, main = "Non-overlap ATE Bounds", ylim = c(-0.3, 0.5))
 ```
 
 The plot shows the non-overlap bounds (the black points) on the ATE axis for a range of _propensity score thresholds_. bounds are _uniform 95% confidence intervals_: this means you can pick any of the intervals, for any choice of threshold, and interpret it as a valid 95% confidence interval (CI) for the ATE.

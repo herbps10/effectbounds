@@ -53,7 +53,7 @@ bounds <- ate_bounds(
   smoothness = c(0.005)
 )
 
-plot(bounds, point_estimate = TRUE, main = "Non-overlap ATE Bounds")
+plot(bounds, point_estimate = TRUE, main = "Non-overlap ATE Bounds", ylim = c(-0.3, 0.5))
 ```
 
 <img src="man/figures/README-example-1.png" width="70%" />
