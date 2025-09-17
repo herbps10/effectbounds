@@ -5,7 +5,14 @@
 \title{Simulate from a simple illustrative data-generating process designed
 to illustrate ATE non-overlap bounds}
 \usage{
-simulate_ate_example(seed = 1, N = 1000, alpha = 1, beta = 0.05, gamma = 1)
+simulate_ate_example(
+  seed = 1,
+  N = 1000,
+  alpha = 1,
+  beta = 0.05,
+  gamma = 1,
+  binary_outcome = TRUE
+)
 }
 \arguments{
 \item{seed}{random number seed}
@@ -17,6 +24,8 @@ simulate_ate_example(seed = 1, N = 1000, alpha = 1, beta = 0.05, gamma = 1)
 \item{beta}{proportion of population subject to non-overlap violation}
 
 \item{gamma}{controls magnitude of the effect}
+
+\item{binary_outcome}{specifies whether to generate a binary (default) or continuous outcome}
 }
 \value{
 data frame with columns X1, X2, A, and Y

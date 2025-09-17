@@ -1,4 +1,4 @@
-check_ate_data <- function(data, X, A, Y) {
+check_ate_data <- function(data, X, A, Y, bounds) {
   if(TRUE != checkmate::check_data_frame(data, min.rows = 1, min.cols = 2)) return("data must be a data frame")
 
   if(TRUE != checkmate::check_character(X)) return("X must be a vector of column names")
@@ -8,11 +8,18 @@ check_ate_data <- function(data, X, A, Y) {
   if(!all(X %in% names(data))) return("All X columns must be in input data")
   if(!(A %in% names(data))) return(glue::glue("treatment column '{A}' must be in input data"))
   if(!(Y %in% names(data))) return(glue::glue("outcome column '{Y}' must be in input data"))
-  if(any(sort(unique(data[[Y]])) != c(0, 1))) return("Outcome must be binary")
+
+  if(TRUE != checkmate::check_numeric(data[[Y]])) return(glue::glue("outcome column '{Y}' must be numeric"))
 
   TRUE
 }
 assert_ate_data <- checkmate::makeAssertionFunction(check_ate_data)
+
+check_outcome_bounds <- function(data, Y) {
+  if(TRUE != checkmate::check_numeric(data[[Y]], lower = 0, upper = 1)) return(glue::glue("outcome column '{Y}' must be in [0, 1]"))
+  TRUE
+}
+assert_outcome_bounds <- checkmate::makeAssertionFunction(check_outcome_bounds)
 
 check_folds <- function(folds) {
   if(TRUE != checkmate::check_number(folds, lower = 1)) return("folds must be a number >= 1")

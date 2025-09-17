@@ -48,7 +48,7 @@ ate_tmle <- function(A, Y, nuisance) {
 }
 
 
-estimate_ate_nuisance <- function(data, X, A, Y, learners_trt, learners_outcome, outer_folds, inner_folds) {
+estimate_ate_nuisance <- function(data, X, A, Y, learners_trt, learners_outcome, outer_folds, inner_folds, outcome_type) {
   N <- nrow(data)
   data0 <- data1 <- data
   data0[[A]] <- 0
@@ -57,6 +57,9 @@ estimate_ate_nuisance <- function(data, X, A, Y, learners_trt, learners_outcome,
 
   cv <- origami::make_folds(nrow(data), origami::folds_vfold, V = outer_folds)
   cv_control <- SuperLearner::SuperLearner.CV.control(V = inner_folds)
+
+  outcome_family <- stats::gaussian()
+  if(all(data[[Y]] %in% c(0, 1))) outcome_family <- stats::binomial()
 
   if(outer_folds > 1) {
     for(fold in seq_along(cv)) {
@@ -76,7 +79,7 @@ estimate_ate_nuisance <- function(data, X, A, Y, learners_trt, learners_outcome,
         Y = data[[Y]][training],
         X = data[training, c(X, A), drop = FALSE],
         SL.library = learners_outcome,
-        family = "binomial",
+        family = outcome_family,
         cvControl = cv_control,
         env = environment(SuperLearner::SuperLearner)
       )
@@ -92,6 +95,7 @@ estimate_ate_nuisance <- function(data, X, A, Y, learners_trt, learners_outcome,
       X = data[, X, drop = FALSE],
       SL.library = learners_trt,
       cvControl = cv_control,
+      family = "binomial",
       env = environment(SuperLearner::SuperLearner)
     )
 
@@ -99,7 +103,7 @@ estimate_ate_nuisance <- function(data, X, A, Y, learners_trt, learners_outcome,
       Y = data[[Y]],
       X = data[, c(X, A), drop = FALSE],
       SL.library = learners_outcome,
-      family = "binomial",
+      family = outcome_family,
       cvControl = cv_control,
       env = environment(SuperLearner::SuperLearner)
     )
@@ -213,7 +217,7 @@ tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter
 #' @param data data frame containing data estimating ATE bounds
 #' @param X vector of covariate column names
 #' @param A name of column containing binary treatment indicator
-#' @param Y name of column containing binary outcome variable
+#' @param Y name of column containing outcome variable (bounded between zero and one)
 #' @param learners_trt SuperLearner learners for estimating propensity
 #' score model.
 #' @param learners_outcome SuperLearner learners for estimtaing outcome
@@ -320,6 +324,7 @@ ate_bounds <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outco
   assert_thresholds(thresholds)
   assert_smoothness(smoothness)
   assert_bootstrap(bootstrap, bootstrap_draws)
+  assert_outcome_bounds(data, Y)
 
   K <- length(thresholds)
   N <- nrow(data)
@@ -343,9 +348,9 @@ ate_bounds <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outco
     for(index in seq_along(thresholds)) {
       threshold <- thresholds[index]
 
-      tmle_lower   <- tmle_smooth_ate(data[[A]], data[[Y]], nuisance$mu0_hat, nuisance$mu1_hat, nuisance$pi_hat, threshold, smoothness, parameter = "lower")
-      tmle_upper   <- tmle_smooth_ate(data[[A]], data[[Y]], nuisance$mu0_hat, nuisance$mu1_hat, nuisance$pi_hat, threshold, smoothness, parameter = "upper")
-      tmle_trimmed <- tmle_smooth_ate(data[[A]], data[[Y]], nuisance$mu0_hat, nuisance$mu1_hat, nuisance$pi_hat, threshold, smoothness, parameter = "trimmed")
+      tmle_lower   <- tmle_smooth_ate(data[[A]], data$Y, nuisance$mu0_hat, nuisance$mu1_hat, nuisance$pi_hat, threshold, smoothness, parameter = "lower")
+      tmle_upper   <- tmle_smooth_ate(data[[A]], data$Y, nuisance$mu0_hat, nuisance$mu1_hat, nuisance$pi_hat, threshold, smoothness, parameter = "upper")
+      tmle_trimmed <- tmle_smooth_ate(data[[A]], data$Y, nuisance$mu0_hat, nuisance$mu1_hat, nuisance$pi_hat, threshold, smoothness, parameter = "trimmed")
 
       trimmed[index] <- tmle_trimmed$psi
       lower[index]   <- tmle_lower$psi

@@ -31,7 +31,7 @@ ate_bounds(
 
 \item{A}{name of column containing binary treatment indicator}
 
-\item{Y}{name of column containing binary outcome variable}
+\item{Y}{name of column containing outcome variable (bounded between zero and one)}
 
 \item{learners_trt}{SuperLearner learners for estimating propensity
 score model.}

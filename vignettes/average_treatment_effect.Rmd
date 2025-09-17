@@ -44,10 +44,6 @@ hist(propensity_scores, main = "Propensity scores")
 hist(1 / propensity_scores, main = "Inverse propensity scores")
 par(mfrow = c(1, 1))
 ```
-
-Another way to visualize the propensity scores is to look at their inverse:
-```{r inv_pscore_histogram, out.width = "50%"}
-```
 The large inverse propensity scores are a sign that there is practical non-overlap in the dataset.
 
 The `ate` function estimates the non-overlap bounds for the ATE. 
