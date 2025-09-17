@@ -28,6 +28,12 @@ plot.atebounds <- function(x, smoothness = x$smoothness[1], point_estimate = FAL
   graphics::plot(1, type = "n", xlim = range(c(0, x$thresholds)), ylim = ylim, xlab = xlab, ylab = ylab, ...)
   graphics::abline(h = 0, col = "gray")
   for(index in indexes) {
+    tightest_lower <- which.max(x$bounds[[index]]$lower_uniform)
+    tightest_upper <- which.min(x$bounds[[index]]$upper_uniform)
+
+    graphics::abline(h = x$bounds[[index]]$lower_uniform[tightest_lower], lty = 2, col = "gray")
+    graphics::abline(h = x$bounds[[index]]$upper_uniform[tightest_upper], lty = 2, col = "gray")
+
     graphics::points(x = x$thresholds, y = x$bounds[[index]]$lower_uniform, pch = 20, col = bounds_color)
     graphics::points(x = x$thresholds, y = x$bounds[[index]]$upper_uniform, pch = 20, col = bounds_color)
 
@@ -36,14 +42,15 @@ plot.atebounds <- function(x, smoothness = x$smoothness[1], point_estimate = FAL
   }
 
   bound_title <- glue::glue("Non-overlap {(1 - x$alpha) * 100}% bounds")
+  tightest_title <- glue::glue("Tightest bounds")
 
   if(point_estimate == TRUE) {
     graphics::points(x = 0, y = x$onestep$ate, col = point_estimate_color, pch = 20)
     graphics::lines(x = c(0, 0), y = c(x$onestep$lower, x$onestep$upper), col = point_estimate_color)
 
-    if(legend_position != "none") graphics::legend(legend_position, c(bound_title, "ATE point estimate and 95% CI"), fill = c(bounds_color, point_estimate_color))
+    if(legend_position != "none") graphics::legend(legend_position, c(bound_title, tightest_title, "ATE point estimate and 95% CI"), fill = c(bounds_color, "gray", point_estimate_color))
   }
   else {
-    if(legend_position != "none") graphics::legend(legend_position, c(bound_title), fill = c(bounds_color))
+    if(legend_position != "none") graphics::legend(legend_position, c(bound_title, tightest_title), fill = c(bounds_color, "gray"))
   }
 }
