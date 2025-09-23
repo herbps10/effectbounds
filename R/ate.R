@@ -348,9 +348,9 @@ ate_bounds <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outco
     for(index in seq_along(thresholds)) {
       threshold <- thresholds[index]
 
-      tmle_lower   <- tmle_smooth_ate(data[[A]], data$Y, nuisance$mu0_hat, nuisance$mu1_hat, nuisance$pi_hat, threshold, smoothness, parameter = "lower")
-      tmle_upper   <- tmle_smooth_ate(data[[A]], data$Y, nuisance$mu0_hat, nuisance$mu1_hat, nuisance$pi_hat, threshold, smoothness, parameter = "upper")
-      tmle_trimmed <- tmle_smooth_ate(data[[A]], data$Y, nuisance$mu0_hat, nuisance$mu1_hat, nuisance$pi_hat, threshold, smoothness, parameter = "trimmed")
+      tmle_lower   <- tmle_smooth_ate(data[[A]], data[[Y]], nuisance$mu0_hat, nuisance$mu1_hat, nuisance$pi_hat, threshold, smoothness, parameter = "lower")
+      tmle_upper   <- tmle_smooth_ate(data[[A]], data[[Y]], nuisance$mu0_hat, nuisance$mu1_hat, nuisance$pi_hat, threshold, smoothness, parameter = "upper")
+      tmle_trimmed <- tmle_smooth_ate(data[[A]], data[[Y]], nuisance$mu0_hat, nuisance$mu1_hat, nuisance$pi_hat, threshold, smoothness, parameter = "trimmed")
 
       trimmed[index] <- tmle_trimmed$psi
       lower[index]   <- tmle_lower$psi
