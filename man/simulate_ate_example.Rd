@@ -13,6 +13,15 @@ simulate_ate_example(
   gamma = 1,
   binary_outcome = TRUE
 )
+
+simulate_ate_example(
+  seed = 1,
+  N = 1000,
+  alpha = 1,
+  beta = 0.05,
+  gamma = 1,
+  binary_outcome = TRUE
+)
 }
 \arguments{
 \item{seed}{random number seed}
@@ -29,8 +38,13 @@ simulate_ate_example(
 }
 \value{
 data frame with columns X1, X2, A, and Y
+
+data frame with columns X1, X2, A, and Y
 }
 \description{
 Simulate from a simple illustrative data-generating process designed
 to illustrate ATE non-overlap bounds
+
+Simulate from a simple illustrative data-generating process designed
+to illustrate transport non-overlap bounds
 }

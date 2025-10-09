@@ -8,7 +8,7 @@ Description: Non-parametric estimators of non-overlap bounds of causal effects, 
 License: Apache License (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.3
 Suggests: 
     knitr,
     rmarkdown,
