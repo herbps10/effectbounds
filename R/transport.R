@@ -302,7 +302,7 @@ tmle_smooth_transport <- function(S, A, Y, mu0, mu1, phi, pi, threshold, smoothn
 #' recommend trying several small values, like \code{10e-3}, \code{10e-2},
 #' and \code{10e-1} in a sensitivity analysis.
 #'
-#' @return A list of class \code{atebounds} containing the following elements:
+#' @return A list of class \code{transportbounds} containing the following elements:
 #' \describe{
 #'  \item{bounds}{List containing estimated bounds for each smoothness parameter.}
 #'  \item{smoothness}{Vector of smoothness parameters.}

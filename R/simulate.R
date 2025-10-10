@@ -41,7 +41,7 @@ simulate_ate_example <- function(seed = 1, N = 1e3, alpha = 1, beta = 0.05, gamm
 #' @return data frame with columns X1, X2, A, and Y
 #'
 #' @export
-simulate_ate_example <- function(seed = 1, N = 1e3, alpha = 1, beta = 0.05, gamma = 1, binary_outcome = TRUE) {
+simulate_transport_example <- function(seed = 1, N = 1e3, alpha = 1, beta = 0.05, gamma = 1, binary_outcome = TRUE) {
   set.seed(seed)
   X1 <- stats::runif(N, -1, 1)
   x  <- stats::runif(N)
@@ -56,5 +56,5 @@ simulate_ate_example <- function(seed = 1, N = 1e3, alpha = 1, beta = 0.05, gamm
     Y  <- stats::rnorm(N, X1 + (A - 0.5) * gamma, 0.1)
   }
 
-  data.frame(X1 = X1, X2 = X2, A = A, Y = Y)
+  data.frame(X1 = X1, X2 = X2, A = A, S = S, Y = Y)
 }

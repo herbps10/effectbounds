@@ -3,14 +3,20 @@
 \name{summary.atebounds}
 \alias{summary.atebounds}
 \alias{print.summary.atebounds}
+\alias{summary.transportbounds}
+\alias{print.summary.transportbounds}
 \title{Summarize ATE non-overlap bounds.}
 \usage{
 \method{summary}{atebounds}(object, ...)
 
 \method{print}{summary.atebounds}(x, ...)
+
+\method{summary}{transportbounds}(object, ...)
+
+\method{print}{summary.transportbounds}(x, ...)
 }
 \arguments{
-\item{object}{list with class \code{atebounds}}
+\item{object}{list with class \code{transportbounds}}
 
 \item{...}{additional arguments (not used)}
 
@@ -20,9 +26,17 @@
 list with class \code{summary.atebounds}
 
 printed summary of ATE non-overlap bounds
+
+list with class \code{summary.transportbounds}
+
+printed summary of ATE non-overlap bounds
 }
 \description{
 Summarize ATE non-overlap bounds.
+
+Print summary of non-overlap bounds for ATE.
+
+Summarize non-overlap bounds for transport ATE.
 
 Print summary of non-overlap bounds for ATE.
 }
