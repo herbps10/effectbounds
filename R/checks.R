@@ -1,3 +1,5 @@
+##### ATE ####
+
 check_ate_data <- function(data, X, A, Y, bounds) {
   if(TRUE != checkmate::check_data_frame(data, min.rows = 1, min.cols = 2)) return("data must be a data frame")
 
@@ -55,3 +57,41 @@ check_ate_nuisance <- function(nuisance, N) {
   TRUE
 }
 assert_ate_nuisance <- checkmate::makeAssertionFunction(check_ate_nuisance)
+
+
+##### Survival #####
+
+check_survival_data <- function(data, X, A, C, Y, bounds) {
+  if(TRUE != checkmate::check_data_frame(data, min.rows = 1, min.cols = 2)) return("data must be a data frame")
+
+  if(TRUE != checkmate::check_character(X)) return("X must be a vector of column names")
+  if(TRUE != checkmate::check_string(A)) return("A must be a column name")
+  if(TRUE != checkmate::check_string(C)) return("C must be a column name")
+  if(TRUE != checkmate::check_string(Y)) return("Y must be a column name")
+
+  if(!all(X %in% names(data))) return("All X columns must be in input data")
+  if(!(A %in% names(data))) return(glue::glue("treatment column '{A}' must be in input data"))
+  if(!(C %in% names(data))) return(glue::glue("treatment column '{C}' must be in input data"))
+  if(!(Y %in% names(data))) return(glue::glue("outcome column '{Y}' must be in input data"))
+
+  if(TRUE != checkmate::check_numeric(data[[Y]])) return(glue::glue("outcome column '{Y}' must be numeric"))
+
+  TRUE
+}
+assert_survival_data <- checkmate::makeAssertionFunction(check_survival_data)
+
+check_survival_nuisance <- function(nuisance, N) {
+  if(TRUE != checkmate::assert_list(nuisance)) return("nuisance must be a list")
+  if(TRUE != checkmate::assert_numeric(nuisance$pi_hat, lower = 0, upper = 1, len = N)) return("nuisance$pi_hat must be a vector")
+  #if(TRUE != checkmate::assert_numeric(nuisance$surv0_hat, lower = 0, upper = 1, len = N)) return("nuisance$surv0_hat must be a vector")
+  #if(TRUE != checkmate::assert_numeric(nuisance$surv1_hat, lower = 0, upper = 1, len = N)) return("nuisance$surv1_hat must be a vector")
+
+  TRUE
+}
+assert_survival_nuisance <- checkmate::makeAssertionFunction(check_survival_nuisance)
+
+check_outcome_nonnegative <- function(data, Y) {
+  if(TRUE != checkmate::check_numeric(data[[Y]], lower = 0)) return(glue::glue("outcome column '{Y}' must be in [0, Inf]"))
+  TRUE
+}
+assert_outcome_nonnegative <- checkmate::makeAssertionFunction(check_outcome_nonnegative)
