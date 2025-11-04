@@ -5,30 +5,27 @@ bound <- function(x, lower = 0, upper = 1) pmin(upper, pmax(lower, x))
 survival_onestep <- function(A, C, Y, times, nuisance, bootstrap, draws, alpha) {
   N <- length(Y)
 
-  eif0 <- matrix(nrow = N, ncol = length(times))
-  eif1 <- matrix(nrow = N, ncol = length(times))
-
-  h0 <- (A == 0) / (1 - nuisance$pi_hat)
-  h1 <- (A == 1) / (nuisance$pi_hat)
+  h0 <- matrix((A == 0) / (1 - nuisance$pi_hat), nrow = N, ncol = length(times))
+  h1 <- matrix((A == 1) / (nuisance$pi_hat), nrow = N, ncol = length(times))
 
   int0 <- nuisance$hazard0_hat / (nuisance$surv0_hat * nuisance$cens_hat)
   int1 <- nuisance$hazard1_hat / (nuisance$surv1_hat * nuisance$cens_hat)
 
   # Indicator for discrete integral
-  tind <- matrix(0, nrow = N, ncol = length(times))
+  tind <- matrix(Y, nrow = N, ncol = length(times), byrow = FALSE) >= matrix(times, nrow = N, ncol = length(times), byrow = TRUE)
 
   # 1 / (S(y | a, w) * G(y | a, w)
   yind <- matrix(times, nrow = N, ncol = length(times), byrow = TRUE) == matrix(Y, nrow = N, ncol = length(times), byrow = FALSE)
-  yinv0 <- 1 / rowSums(nuisance$surv0_hat * nuisance$cens_hat * yind)
-  yinv1 <- 1 / rowSums(nuisance$surv1_hat * nuisance$cens_hat * yind)
+  yinv0 <- matrix(1 / rowSums(nuisance$surv0_hat * nuisance$cens_hat * yind), nrow = N, ncol = length(times), byrow = FALSE)
+  yinv1 <- matrix(1 / rowSums(nuisance$surv1_hat * nuisance$cens_hat * yind), nrow = N, ncol = length(times), byrow = FALSE)
 
-  for(tindex in 1:length(times)) {
-    t0 <- times[tindex]
-    tind[, tindex] <- Y >= t0
+  cens_lt_mat <- (matrix(C, nrow = length(Y), ncol = length(times), byrow = FALSE) == 1) & (matrix(Y, nrow = length(Y), ncol = length(times), byrow = FALSE) <= matrix(times, nrow = length(Y), ncol = length(times), byrow = TRUE))
 
-    eif0[, tindex] <- nuisance$surv0_hat[, tindex] * (1 - h0 * ((Y <= t0 & C == 1) * yinv0 - rowSums(tind * int0)))
-    eif1[, tindex] <- nuisance$surv1_hat[, tindex] * (1 - h1 * ((Y <= t0 & C == 1) * yinv1 - rowSums(tind * int1)))
-  }
+  cumsums0 <- t(apply(tind * int0, 1, cumsum))
+  cumsums1 <- t(apply(tind * int1, 1, cumsum))
+
+  eif0 <- nuisance$surv0_hat * (1 - h0 * (cens_lt_mat * yinv0 - cumsums0))
+  eif1 <- nuisance$surv1_hat * (1 - h1 * (cens_lt_mat * yinv1 - cumsums1))
 
   curve0 <- isotonize(bound(colMeans(eif0)))
   curve0_lower <- isotonize(bound(curve0 + stats::qnorm(0.025) * apply(eif0, 2, stats::sd) / sqrt(N)))
@@ -119,8 +116,8 @@ estimate_survival_nuisance <- function(data, X, A, C, Y, learners_trt, learners_
       pi_hat[validation]  <- SuperLearner::predict.SuperLearner(pi_model, newdata = data[validation, ], onlySL = TRUE)$pred
       surv0_hat[validation, ] <- survival_model$event.SL.predict[part0, ]
       surv1_hat[validation, ] <- survival_model$event.SL.predict[part1, ]
-      cens0_hat[validation, ] <- survival_model$cens.SL.predict[part0, ]
-      cens1_hat[validation, ] <- survival_model$cens.SL.predict[part1, ]
+      cens0_hat[validation, ] <- cbind(1, survival_model$cens.SL.predict[part0, -length(times)])
+      cens1_hat[validation, ] <- cbind(1, survival_model$cens.SL.predict[part1, -length(times)])
     }
   }
   else {
@@ -191,11 +188,13 @@ onestep_smooth_survival <- function(A, C, Y, surv0, surv1, hazard0, hazard1, cen
     eif <- eif_survival_trimmed(A, C, Y, surv0, surv1, hazard0, hazard1, cens, pi, times, threshold, smoothness)
   }
   else if(parameter == "upper") {
-    psi <- psi_trimmed + 1 - mean(s_gt(pi, threshold, smoothness))
+    omega <- matrix(1 - pi, nrow = N, ncol = length(times), byrow = FALSE) * cens
+    psi <- psi_trimmed + (1 - colMeans(s_gt(omega, threshold, smoothness)))
     eif <- eif_survival_upper(A, C, Y, surv0, surv1, hazard0, hazard1, cens, pi, times, threshold, smoothness)
   }
   else if(parameter == "lower") {
-    psi <- psi_trimmed - 1 + mean(s_lt(pi, 1 - threshold, smoothness))
+    omega <- matrix(pi, nrow = N, ncol = length(times), byrow = FALSE) * cens
+    psi <- psi_trimmed + (1 - colMeans(s_gt(omega, threshold, smoothness)))
     eif <- eif_survival_lower(A, C, Y, surv0, surv1, hazard0, hazard1, cens, pi, times, threshold, smoothness)
   }
 
@@ -367,10 +366,10 @@ survival_bounds <- function(data, X, A, C, Y, times = NULL, learners_trt = c("SL
 
       trimmed_ci[1, index, ] <- onestep_trimmed$ci[1,]
       trimmed_ci[2, index, ] <- onestep_trimmed$ci[2,]
-      lower_ci[1, index, ]   <- onestep_lower$ci[1,]
-      lower_ci[2, index, ]   <- onestep_lower$ci[2,]
-      upper_ci[1, index, ]   <- onestep_upper$ci[1,]
-      upper_ci[2, index, ]   <- onestep_upper$ci[2,]
+      lower_ci[1, index, ]   <- bound(onestep_lower$ci[1,], -1, 1)
+      lower_ci[2, index, ]   <- bound(onestep_lower$ci[2,], -1, 1)
+      upper_ci[1, index, ]   <- bound(onestep_upper$ci[1,], -1, 1)
+      upper_ci[2, index, ]   <- bound(onestep_upper$ci[2,], -1, 1)
     }
 
     list(
@@ -411,8 +410,8 @@ survival_bounds <- function(data, X, A, C, Y, times = NULL, learners_trt = c("SL
     for(smoothness_index in seq_along(smoothness)) {
       for(threshold_index in seq_along(thresholds)) {
         ri <- ((smoothness_index - 1) * K * length(times) + (threshold_index - 1) * length(times) + 1):((smoothness_index - 1) * K * length(times) + threshold_index * length(times))
-        results[[smoothness_index]]$lower_uniform[threshold_index, ] <- uniform_ci$ci[ri, 1]
-        results[[smoothness_index]]$upper_uniform[threshold_index, ] <- uniform_ci$ci[ri, 2]
+        results[[smoothness_index]]$lower_uniform[threshold_index, ] <- bound(uniform_ci$ci[ri, 1], -1, 1)
+        results[[smoothness_index]]$upper_uniform[threshold_index, ] <- bound(uniform_ci$ci[ri, 2], -1, 1)
       }
     }
 
