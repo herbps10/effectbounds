@@ -108,7 +108,7 @@ eif_transport_trimmed <- function(S, A, Y, mu0, mu1, phi, pi, threshold, smoothn
   s0_weight <- (S == 0) / mean(S == 0)
   phi_weight <- (1 - phi) / phi
 
-  plugin <- (S == 0) / mean(S == 0) * (mu1 * w1 - mu0 * w0)
+  plugin <- mean((S == 0) / mean(S == 0) * (mu1 * w1 - mu0 * w0))
 
   eif <- s1_weight * phi_weight * (A / pi * w1  - (1 - A) / (1 - pi) * w0) * (Y - mu)
   eif <- eif + s1_weight * (1 - phi) * (mu1 * w1_dot + mu0 * w0_dot ) * (A - pi)
@@ -135,7 +135,8 @@ eif_transport_lower <- function(S, A, Y, mu0, mu1, phi, pi, threshold, smoothnes
 
   eif <- eif_transport_trimmed(S, A, Y, mu0, mu1, phi, pi, threshold, smoothness)
 
-  eif <- eif - (S == 1) / mean(S == 0) * w0_dot * (1 - phi) * (A - pi)
+  pi0 <- 1 - pi
+  eif <- eif + (S == 1) / mean(S == 0) * w0_dot * (1 - phi) * ((A == 0) - pi0)
   eif <- eif + 1 / mean(S == 0) * w0_dot * (1 - pi) * (1 - phi) * (S - phi)
   eif <- eif + (S == 0) / mean(S == 0) * (w0 - plugin)
   eif

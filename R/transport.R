@@ -113,6 +113,34 @@ estimate_transport_nuisance <- function(data, X, S, A, Y, learners_trt, learners
   )
 }
 
+onestep_smooth_transport <-  function(S, A, Y, mu0, mu1, phi, pi, threshold, smoothness, parameter = "trimmed", verbose = FALSE) {
+  w0 <- s_gt((1 - pi) * phi, threshold, smoothness)
+  w1 <- s_gt(pi * phi, threshold, smoothness)
+  psi_trimmed <- mean((mu1 * w1 - mu0 * w0) * (S == 0)) / mean(S == 0)
+
+  if(parameter == "trimmed") {
+    psi <- psi_trimmed
+    eif <- eif_transport_trimmed(S, A, Y, mu0, mu1, phi, pi, threshold, smoothness)
+  }
+  else if(parameter == "upper") {
+    psi <- psi_trimmed + 1 / mean(S == 0) * mean((S == 0) * (1 - s_gt(pi * phi, threshold, smoothness)))
+    eif <- eif_transport_upper(S, A, Y, mu0, mu1, phi, pi, threshold, smoothness)
+  }
+  else if(parameter == "lower") {
+    psi <- psi_trimmed - 1 / mean(S == 0) * mean((S == 0) * (1 - s_gt((1 - pi) * phi, threshold, smoothness)))
+    eif <- eif_transport_lower(S, A, Y, mu0, mu1, phi, pi, threshold, smoothness)
+  }
+
+  psi <- psi + mean(eif)
+  ci <- psi + stats::qnorm(c(0.025, 0.975)) * stats::sd(eif) / sqrt(length(Y))
+
+  list(
+    psi = psi,
+    eif = eif,
+    ci = ci
+  )
+}
+
 # TMLE algorithm for non-overlap transport bound parameters
 tmle_smooth_transport <- function(S, A, Y, mu0, mu1, phi, pi, threshold, smoothness, parameter = "trimmed", maxiter = 25, verbose = FALSE) {
   fluctuation <- \(epsilon, mu0, mu1, phi, pi) {
@@ -217,6 +245,7 @@ tmle_smooth_transport <- function(S, A, Y, mu0, mu1, phi, pi, threshold, smoothn
     psi <- psi_trimmed - 1 / mean(S == 0) * mean((S == 0) * (1 - s_gt((1 - pi_star) * phi_star, threshold, smoothness)))
     eif <- eif_transport_lower(S, A, Y, mu0_star, mu1_star, phi_star, pi_star, threshold, smoothness)
   }
+
 
   list(
     psi = psi,
@@ -367,24 +396,24 @@ transport_bounds <- function(data, X, S, A, Y, learners_trt = c("SL.glm"), learn
     for(index in seq_along(thresholds)) {
       threshold <- thresholds[index]
 
-      tmle_lower   <- tmle_smooth_transport(data[[S]], data[[A]], data[[Y]], nuisance$mu0_hat, nuisance$mu1_hat, nuisance$phi_hat, nuisance$pi_hat, threshold, smoothness, parameter = "lower")
-      tmle_upper   <- tmle_smooth_transport(data[[S]], data[[A]], data[[Y]], nuisance$mu0_hat, nuisance$mu1_hat, nuisance$phi_hat, nuisance$pi_hat, threshold, smoothness, parameter = "upper")
-      tmle_trimmed <- tmle_smooth_transport(data[[S]], data[[A]], data[[Y]], nuisance$mu0_hat, nuisance$mu1_hat, nuisance$phi_hat, nuisance$pi_hat, threshold, smoothness, parameter = "trimmed")
+      onestep_lower   <- onestep_smooth_transport(data[[S]], data[[A]], data[[Y]], nuisance$mu0_hat, nuisance$mu1_hat, nuisance$phi_hat, nuisance$pi_hat, threshold, smoothness, parameter = "lower")
+      onestep_upper   <- onestep_smooth_transport(data[[S]], data[[A]], data[[Y]], nuisance$mu0_hat, nuisance$mu1_hat, nuisance$phi_hat, nuisance$pi_hat, threshold, smoothness, parameter = "upper")
+      onestep_trimmed <- onestep_smooth_transport(data[[S]], data[[A]], data[[Y]], nuisance$mu0_hat, nuisance$mu1_hat, nuisance$phi_hat, nuisance$pi_hat, threshold, smoothness, parameter = "trimmed")
 
-      trimmed[index] <- tmle_trimmed$psi
-      lower[index]   <- tmle_lower$psi
-      upper[index]   <- tmle_upper$psi
+      trimmed[index] <- onestep_trimmed$psi
+      lower[index]   <- onestep_lower$psi
+      upper[index]   <- onestep_upper$psi
 
-      trimmed_eif[, index] <- tmle_trimmed$eif
-      lower_eif[, index]   <- tmle_lower$eif
-      upper_eif[, index]   <- tmle_upper$eif
+      trimmed_eif[, index] <- onestep_trimmed$eif
+      lower_eif[, index]   <- onestep_lower$eif
+      upper_eif[, index]   <- onestep_upper$eif
 
-      trimmed_ci[index, 1] <- tmle_trimmed$ci[1]
-      trimmed_ci[index, 2] <- tmle_trimmed$ci[2]
-      lower_ci[index, 1]   <- tmle_lower$ci[1]
-      lower_ci[index, 2]   <- tmle_lower$ci[2]
-      upper_ci[index, 1]   <- tmle_upper$ci[1]
-      upper_ci[index, 2]   <- tmle_upper$ci[2]
+      trimmed_ci[index, 1] <- onestep_trimmed$ci[1]
+      trimmed_ci[index, 2] <- onestep_trimmed$ci[2]
+      lower_ci[index, 1]   <- onestep_lower$ci[1]
+      lower_ci[index, 2]   <- onestep_lower$ci[2]
+      upper_ci[index, 1]   <- onestep_upper$ci[1]
+      upper_ci[index, 2]   <- onestep_upper$ci[2]
     }
 
     list(
