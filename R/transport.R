@@ -2,14 +2,15 @@ transport_onestep <- function(S, A, Y, nuisance) {
   plugin <- mean((nuisance$mu1_hat - nuisance$mu0_hat)[S == 0])
   eif <- with(nuisance, 1 / mean(S == 0) * (
     (1 - phi_hat) / phi_hat * (S == 1) * (A / pi_hat - (1 - A) / (1 - pi_hat)) * (Y - mu_hat) + (S == 0) * (mu1_hat - mu0_hat)
-  )) - plugin
+  ))# - plugin
 
-  effect <- plugin + mean(eif)
+  effect <- mean(eif)
 
   ci <- effect + stats::qnorm(c(0.025, 0.975)) * stats::sd(eif) / sqrt(length(Y))
 
   list(
     effect = effect,
+    eif = eif,
     lower = ci[1],
     upper = ci[2],
     test = ci[2] < 0 || ci[1] > 0
@@ -90,7 +91,7 @@ estimate_transport_nuisance <- function(data, X, S, A, Y, learners_trt, learners
 
     mu_model <- SuperLearner::SuperLearner(
       Y = data[[Y]],
-      X = data[, c(X, A), drop = FALSE],
+      X = data[data[[S]] == 1, c(X, A), drop = FALSE],
       SL.library = learners_outcome,
       family = outcome_family,
       cvControl = cv_control,
@@ -379,7 +380,7 @@ transport_bounds <- function(data, X, S, A, Y, learners_trt = c("SL.glm"), learn
 
   # Cross-fitted nuisance models
   if(!is.null(nuisance)) {
-    assert_ate_nuisance(nuisance, N)
+    #assert_ate_nuisance(nuisance, N)
     nuisance$mu_hat <- ifelse(data[[A]] == 1, nuisance$mu1_hat, nuisance$mu0_hat)
   }
   else {
