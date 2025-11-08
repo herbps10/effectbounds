@@ -118,7 +118,7 @@ print.summary.transportbounds <- function(x, ...) {
   u <- format(1 / x$propensity_score_range[1], digits = 3)
   cat(glue::glue("\n\n Range of estimated inverse propensity scores: {l} - {u}"))
 
-  point <- format(x$onestep$ate, digits = 3)
+  point <- format(x$onestep$effect, digits = 3)
   l <- format(x$onestep$lower, digits = 3)
   u <- format(x$onestep$upper, digits = 3)
   cat(glue::glue("\n\nTransport ATE point estimate: {point}. 95% CI: ({l}, {u})\n\n"))
