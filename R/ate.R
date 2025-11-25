@@ -403,6 +403,7 @@ ate_bounds <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outco
   }
 
   out <- list(
+    trt = trt_grid,
     bounds = results,
     smoothness = smoothness,
     thresholds = thresholds,
