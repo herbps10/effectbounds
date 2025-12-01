@@ -1,4 +1,4 @@
-cdrf_kernel <- function(a0, bw, a_grid) {
+cdrf_kernel <- function(a0, bw) {
   k <- \(a, a0, bw) 1 / (sqrt(2 * pi) * bw) * exp(-(a - a0)^2 / (2 * bw^2))
   n <- integrate(\(a) k(a, a0, bw), -Inf, Inf)$value
   \(a) k(a, a0, bw) / n
@@ -9,7 +9,7 @@ cdrf_onestep <- function(A, Y, trt_grid, a_grid, nuisance, bw) {
   eif <- matrix(ncol = length(trt_grid), nrow = length(Y))
 
   for(index in seq_along(trt_grid)) {
-    k <- cdrf_kernel(trt_grid[index], bw, a_grid)
+    k <- cdrf_kernel(trt_grid[index], bw)
     eif[, index] <- eif_cdrf(A, Y, nuisance$mu_hat, nuisance$mu_a_hat, nuisance$pi_hat, nuisance$pi_a_hat, a_grid, k)
   }
 
@@ -19,7 +19,6 @@ cdrf_onestep <- function(A, Y, trt_grid, a_grid, nuisance, bw) {
   upper <- cdrf + qnorm(0.975) * se / sqrt(N)
 
   list(
-    trt = trt_grid,
     cdrf = cdrf,
     lower = lower,
     upper = upper
@@ -130,7 +129,7 @@ onestep_smooth_cdrf <- function(A, Y, mu, mu_a, pi, pi_a, trt_grid, a_grid, bw, 
 
   eif <- matrix(nrow = N, ncol = length(trt_grid))
   for(index in seq_along(trt_grid)) {
-    k <- cdrf_kernel(trt_grid[index], bw, a_grid)
+    k <- cdrf_kernel(trt_grid[index], bw)
     if(parameter == "upper") {
       eif[, index] <- eif_cdrf_upper(A, Y, mu, mu_a, pi, pi_a, a_grid, k, threshold, smoothness)
     }
@@ -315,6 +314,7 @@ cdrf_bounds <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outc
   }
 
   out <- list(
+    trt = trt_grid,
     bounds = results,
     smoothness = smoothness,
     thresholds = thresholds,

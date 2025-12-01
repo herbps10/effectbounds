@@ -54,3 +54,59 @@ plot.atebounds <- function(x, smoothness = x$smoothness[1], point_estimate = FAL
     if(legend_position != "none") graphics::legend(legend_position, c(bound_title, tightest_title), fill = c(bounds_color, "gray"))
   }
 }
+
+#' Plot estimated CDRF non-overlap bounds
+#'
+#' @param x object of type "cdrfbounds"
+#' @param smoothness which smoothness tuning parameter bounds to plot; set to NA to print all
+#' @param point_estimate whether to plot point estimate and 95% confidence interval
+#' @param ylim limits of y axis
+#' @param xlab x axis label
+#' @param ylab y axis label
+#' @param legend_position where to show legend (set to "none" to hide legend)
+#' @param bounds_color color of point estimate and 95% confidence interval
+#' @param point_estimate_color color of point estimate and 95% confidence interval
+#' @param ... additional arguments passed to plot.default
+#' @export
+plot.cdrfbounds <- function(x, smoothness = x$smoothness[1], point_estimate = FALSE, ylim = NA, xlab = "A", ylab = "CDRF", legend_position = "bottomright", bounds_color = "black", point_estimate_color = "blue", ...) {
+  if(is.na(smoothness)) {
+    indexes <- seq_along(x$smoothness)
+  }
+  else {
+    if(!any(x$smoothness == smoothness)) stop(glue::glue("Smoothness {smoothness} not found in CDRF bounds object."))
+    indexes <- which(x$smoothness == smoothness)
+  }
+
+  if(any(is.na(ylim))) {
+    #ylim <- range(unlist(lapply(x$bounds, \(bounds) range(c(bounds$lower_uniform, bounds$upper_uniform)))))
+    ylim <- range(unlist(lapply(x$bounds, \(bounds) range(c(bounds$lower_pointwise, bounds$upper_pointwise)))))
+    if(point_estimate == TRUE) ylim <- range(c(x$onestep$lower, x$onestep$upper, ylim))
+  }
+
+  graphics::plot(1, type = "n", xlim = range(x$trt), ylim = ylim, xlab = xlab, ylab = ylab, ...)
+  for(index in indexes) {
+    tightest_lower <- apply(x$bounds[[index]]$lower_pointwise, 2, max)
+    tightest_upper <- apply(x$bounds[[index]]$upper_pointwise, 2, min)
+
+    graphics::points(x = x$trt, y = tightest_lower, pch = 20, col = bounds_color)
+    graphics::points(x = x$trt, y = tightest_upper, pch = 20, col = bounds_color)
+
+    graphics::lines(x = x$trt, y = tightest_lower, col = bounds_color)
+    graphics::lines(x = x$trt, y = tightest_upper, col = bounds_color)
+  }
+
+  bound_title <- glue::glue("Non-overlap {(1 - x$alpha) * 100}% bounds")
+  tightest_title <- glue::glue("Tightest bounds")
+
+  if(point_estimate == TRUE) {
+    graphics::lines(x = x$trt, y = x$onestep$cdrf, col = point_estimate_color)
+    graphics::lines(x = x$trt, y = x$onestep$lower, col = point_estimate_color)
+    graphics::lines(x = x$trt, y = x$onestep$upper, col = point_estimate_color)
+
+    if(legend_position != "none") graphics::legend(legend_position, c(bound_title, tightest_title, "CDRF estimate and 95% CI"), fill = c(bounds_color, "gray", point_estimate_color))
+  }
+  else {
+    if(legend_position != "none") graphics::legend(legend_position, c(bound_title, tightest_title), fill = c(bounds_color, "gray"))
+  }
+}
+
