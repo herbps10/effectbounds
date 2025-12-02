@@ -86,7 +86,7 @@ estimate_cdrf_nuisance <- function(data, X, A, Y, learners_trt, learners_outcome
 
       mu_a_hat[validation] <- SuperLearner::predict.SuperLearner(mu_model, newdata = data[validation, c(X, A)], onlySL = TRUE)$pred
 
-      dataA <- data[rep(validation, times = length(a_grid)), X]
+      dataA <- data[rep(validation, times = length(a_grid)), X, drop = FALSE]
       dataA[[A]] <- rep(a_grid, each = length(validation))
       mu_hat[validation, ] <- matrix(SuperLearner::predict.SuperLearner(mu_model, newdata = dataA, onlySL = TRUE)$pred, ncol = length(a_grid), nrow = length(validation))
     }
