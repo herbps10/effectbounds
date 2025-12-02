@@ -63,15 +63,18 @@ estimate_cdrf_nuisance <- function(data, X, A, Y, learners_trt, learners_outcome
         env = environment(SuperLearner::SuperLearner)
       )
 
-      a_std <- (data[[A]][training] - a_model$SL.predict) / sqrt(a2_model$SL.predict)
+      a2_pred_train <- ifelse(a2_model$SL.predict >= 0, a2_model$SL.predict, 0)
+
+      a_std <- (data[[A]][training] - a_model$SL.predict) / sqrt(a2_pred_train)
 
       pi_dens <- density(a_std[!is.na(a_std)])
       pi_fun  <- approxfun(pi_dens$x, pi_dens$y, yleft = 0, yright = 0)
-      pi_hat_mat <- (matrix(pi_fun(((rep(a_grid, length(training)) - rep(a_model$SL.predict, each = length(a_grid)))) / rep(sqrt(a2_model$SL.predict), each = length(a_grid))), ncol = length(a_grid), nrow = length(training), byrow = TRUE))
+      pi_hat_mat <- (matrix(pi_fun(((rep(a_grid, length(training)) - rep(a_model$SL.predict, each = length(a_grid)))) / rep(sqrt(a2_pred_train), each = length(a_grid))), ncol = length(a_grid), nrow = length(training), byrow = TRUE))
       var_pi_fun <- approxfun(a_grid, colMeans(pi_hat_mat), rule = 2)
 
       a_pred  <- SuperLearner::predict.SuperLearner(a_model, newdata = data[validation, X, drop = FALSE])$pred[, 1]
       a2_pred <- SuperLearner::predict.SuperLearner(a2_model, newdata = data[validation, X, drop = FALSE])$pred[, 1]
+      a2_pred <- ifelse(a2_pred >= 0, a2_pred, 0)
 
       pi_a_hat[validation] <- pi_fun((data[[A]][validation] - a_pred) / sqrt(a2_pred)) #/ var_pi_fun(data[[A]][validation])
       a_std_validation <- ((rep(a_grid, length(validation)) - rep(a_pred, each = length(a_grid)))) / rep(sqrt(a2_pred), each = length(a_grid))
