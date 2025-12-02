@@ -1,3 +1,5 @@
+bound <- function(x, lower = 0, upper = 1) pmin(upper, pmax(lower, x))
+
 cdrf_kernel <- function(a0, bw) {
   k <- \(a, a0, bw) 1 / (sqrt(2 * pi) * bw) * exp(-(a - a0)^2 / (2 * bw^2))
   n <- integrate(\(a) k(a, a0, bw), -Inf, Inf)$value
@@ -294,29 +296,42 @@ cdrf_bounds <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outc
     )
   })
 
-  if(FALSE) {
   uniform_critical_value <- NA
   if(bootstrap == TRUE) {
     # Multiplier bootstrap
-
-    uniform_ci <- matrix(NA, K * length(smoothness), 2)
+    uniform_ci <- matrix(NA, K * length(smoothness) * length(trt_grid), 2)
 
     # Combine point estimates and EIFs from all smoothness options into combined vectors/matrices
-    lower <- unlist(lapply(results, `[[`, "lower"))
-    upper <- unlist(lapply(results, `[[`, "upper"))
-    lower_eif <- do.call(cbind, lapply(results, `[[`, "lower_eif"))
-    upper_eif <- do.call(cbind, lapply(results, `[[`, "upper_eif"))
+    lower <- numeric(K * length(trt_grid) * length(smoothness))
+    upper <- numeric(K * length(trt_grid) * length(smoothness))
+
+    lower_eif <- matrix(nrow = N, ncol = K * length(trt_grid) * length(smoothness))
+    upper_eif <- matrix(nrow = N, ncol = K * length(trt_grid) * length(smoothness))
+
+    lower <- unlist(lapply(results, \(x) t(x$lower)))
+    upper <- unlist(lapply(results, \(x) t(x$upper)))
+    lower_eif <- Reduce(cbind, lapply(1:length(smoothness), \(smoothness_index) Reduce(cbind, lapply(1:K, \(threshold_index) results[[smoothness_index]]$lower_eif[,threshold_index,]))))
+    upper_eif <- Reduce(cbind, lapply(1:length(smoothness), \(smoothness_index) Reduce(cbind, lapply(1:K, \(threshold_index) results[[smoothness_index]]$upper_eif[,threshold_index,]))))
 
     uniform_ci <- multiplier_bootstrap(lower, upper, lower_eif, upper_eif, draws = bootstrap_draws, alpha = alpha)
 
     uniform_critical_value <- uniform_ci$critical_value
 
-    for(index in seq_along(smoothness)) {
-      ri <- ((index - 1) * K + 1):(index * K)
-      results[[index]]$lower_uniform <- uniform_ci$ci[ri, 1]
-      results[[index]]$upper_uniform <- uniform_ci$ci[ri, 2]
+    for(smoothness_index in seq_along(smoothness)) {
+      for(threshold_index in seq_along(thresholds)) {
+        ri <- ((smoothness_index - 1) * K * length(trt_grid) + (threshold_index - 1) * length(trt_grid) + 1):((smoothness_index - 1) * K * length(trt_grid) + threshold_index * length(trt_grid))
+        results[[smoothness_index]]$lower_uniform[threshold_index, ] <- bound(uniform_ci$ci[ri, 1], -1, 1)
+        results[[smoothness_index]]$upper_uniform[threshold_index, ] <- bound(uniform_ci$ci[ri, 2], -1, 1)
+      }
     }
-  }
+
+    tightest_bounds <- matrix(nrow = 2, ncol = length(trt_grid))
+    for(tindex in seq_along(trt_grid)) {
+      tightest_bounds[1, tindex] <- max(unlist(lapply(results, \(x) max(x$lower_uniform[, tindex]))))
+      tightest_bounds[2, tindex] <- min(unlist(lapply(results, \(x) min(x$upper_uniform[, tindex]))))
+    }
+    tightest_bounds[1, ] <- tightest_bounds[1, ]
+    tightest_bounds[2, ] <- tightest_bounds[2, ]
   }
 
   out <- list(
@@ -326,7 +341,8 @@ cdrf_bounds <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outc
     thresholds = thresholds,
     onestep = onestep,
     alpha = alpha,
-    #uniform_critical_value = uniform_critical_value,
+    tightest_bounds = tightest_bounds,
+    uniform_critical_value = uniform_critical_value,
     N = N,
     K = K,
     nuisance = nuisance

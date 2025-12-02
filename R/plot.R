@@ -78,24 +78,20 @@ plot.cdrfbounds <- function(x, smoothness = x$smoothness[1], point_estimate = FA
   }
 
   if(any(is.na(ylim))) {
-    #ylim <- range(unlist(lapply(x$bounds, \(bounds) range(c(bounds$lower_uniform, bounds$upper_uniform)))))
-    ylim <- range(unlist(lapply(x$bounds, \(bounds) range(c(apply(bounds$lower_pointwise, 2, max), apply(bounds$upper_pointwise, 2, min))))))
+    ylim <- range(bounds$tightest_bounds)
     if(point_estimate == TRUE) ylim <- range(c(x$onestep$lower, x$onestep$upper, ylim))
   }
 
   graphics::plot(1, type = "n", xlim = range(x$trt), ylim = ylim, xlab = xlab, ylab = ylab, ...)
   for(index in indexes) {
-    tightest_lower <- apply(x$bounds[[index]]$lower_pointwise, 2, max)
-    tightest_upper <- apply(x$bounds[[index]]$upper_pointwise, 2, min)
+    graphics::points(x = x$trt, y = bounds$tightest_bounds[1, ], pch = 20, col = bounds_color)
+    graphics::points(x = x$trt, y = bounds$tightest_bounds[2, ], pch = 20, col = bounds_color)
 
-    graphics::points(x = x$trt, y = tightest_lower, pch = 20, col = bounds_color)
-    graphics::points(x = x$trt, y = tightest_upper, pch = 20, col = bounds_color)
-
-    graphics::lines(x = x$trt, y = tightest_lower, col = bounds_color)
-    graphics::lines(x = x$trt, y = tightest_upper, col = bounds_color)
+    graphics::lines(x = x$trt, y = bounds$tightest_bounds[1, ], col = bounds_color)
+    graphics::lines(x = x$trt, y = bounds$tightest_bounds[2, ], col = bounds_color)
   }
 
-  bound_title <- glue::glue("Non-overlap {(1 - x$alpha) * 100}% bounds")
+  bound_title <- glue::glue("Uniform non-overlap {(1 - x$alpha) * 100}% bounds")
   tightest_title <- glue::glue("Tightest bounds")
 
   if(point_estimate == TRUE) {
