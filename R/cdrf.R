@@ -21,9 +21,9 @@ cdrf_onestep <- function(A, Y, trt_grid, a_grid, nuisance, bw) {
   upper <- cdrf + qnorm(0.975) * se / sqrt(N)
 
   list(
-    cdrf = cdrf,
-    lower = lower,
-    upper = upper
+    cdrf = bound(cdrf, 0, 1),
+    lower = bound(lower, 0, 1),
+    upper = bound(upper, 0, 1)
   )
 }
 
@@ -65,7 +65,7 @@ estimate_cdrf_nuisance <- function(data, X, A, Y, learners_trt, learners_outcome
 
       a_std <- (data[[A]][training] - a_model$SL.predict) / sqrt(a2_model$SL.predict)
 
-      pi_dens <- density(a_std)
+      pi_dens <- density(a_std[!is.na(a_std)])
       pi_fun  <- approxfun(pi_dens$x, pi_dens$y, yleft = 0, yright = 0)
       pi_hat_mat <- (matrix(pi_fun(((rep(a_grid, length(training)) - rep(a_model$SL.predict, each = length(a_grid)))) / rep(sqrt(a2_model$SL.predict), each = length(a_grid))), ncol = length(a_grid), nrow = length(training), byrow = TRUE))
       var_pi_fun <- approxfun(a_grid, colMeans(pi_hat_mat), rule = 2)
@@ -277,10 +277,10 @@ cdrf_bounds <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outc
       lower_eif[, index, ]   <- onestep_lower$eif
       upper_eif[, index, ]   <- onestep_upper$eif
 
-      lower_ci[1, index, ] <- onestep_lower$ci[1, ]
-      lower_ci[2, index, ] <- onestep_lower$ci[2, ]
-      upper_ci[1, index, ] <- onestep_upper$ci[1, ]
-      upper_ci[2, index, ] <- onestep_upper$ci[2, ]
+      lower_ci[1, index, ] <- bound(onestep_lower$ci[1, ], 0, 1)
+      lower_ci[2, index, ] <- bound(onestep_lower$ci[2, ], 0, 1)
+      upper_ci[1, index, ] <- bound(onestep_upper$ci[1, ], 0, 1)
+      upper_ci[2, index, ] <- bound(onestep_upper$ci[2, ], 0, 1)
     }
 
     list(
@@ -320,8 +320,8 @@ cdrf_bounds <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outc
     for(smoothness_index in seq_along(smoothness)) {
       for(threshold_index in seq_along(thresholds)) {
         ri <- ((smoothness_index - 1) * K * length(trt_grid) + (threshold_index - 1) * length(trt_grid) + 1):((smoothness_index - 1) * K * length(trt_grid) + threshold_index * length(trt_grid))
-        results[[smoothness_index]]$lower_uniform[threshold_index, ] <- bound(uniform_ci$ci[ri, 1], -1, 1)
-        results[[smoothness_index]]$upper_uniform[threshold_index, ] <- bound(uniform_ci$ci[ri, 2], -1, 1)
+        results[[smoothness_index]]$lower_uniform[threshold_index, ] <- bound(uniform_ci$ci[ri, 1], 0, 1)
+        results[[smoothness_index]]$upper_uniform[threshold_index, ] <- bound(uniform_ci$ci[ri, 2], 0, 1)
       }
     }
 
