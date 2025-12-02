@@ -115,6 +115,12 @@ estimate_cdrf_nuisance <- function(data, X, A, Y, learners_trt, learners_outcome
     mu1_hat <- SuperLearner::predict.SuperLearner(mu_model, newdata = data1, onlySL = TRUE)$pred
   }
 
+  #eps <- 1e-8
+  #pi_hat[pi_hat == 0] <- eps
+  #pi_hat[pi_hat == 1] <- 1 - eps
+  #pi_a_hat[pi_a_hat == 0] <- eps
+  #pi_a_hat[pi_a_hat == 1] <- 1 - eps
+
   list(
     pi_hat = pi_hat,
     pi_a_hat = pi_a_hat,
@@ -237,7 +243,7 @@ cdrf_bounds <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outc
   K <- length(thresholds)
   N <- nrow(data)
 
-  a_grid <- seq(min(data[[A]]), max(data[[A]]), length.out = 100)
+  a_grid <- seq(min(data[[A]]) - bw * 10, max(data[[A]]) + bw * 10, length.out = 150)
 
   # Cross-fitted nuisance models
   if(!is.null(nuisance)) {

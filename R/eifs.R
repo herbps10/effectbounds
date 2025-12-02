@@ -72,21 +72,21 @@ eif_upper <- function(A, Y, mu0, mu1, pi, threshold, smoothness) {
 #
 eif_cdrf <- function(A, Y, mu, mu_a, pi, pi_a, a_grid, k) {
   z <- apply(matrix(k(a_grid), ncol = length(a_grid), nrow = length(Y), byrow = TRUE) * mu, 1, pracma::trapz, x = a_grid)
-  k(A) / pi_a * (Y - mu_a) + z
+  k(A) / ifelse(pi_a == 0, 1e-8, pi_a) * (Y - mu_a) + z
 }
 
 eif_cdrf_lower <- function(A, Y, mu, mu_a, pi, pi_a, a_grid, k, threshold, smoothness) {
-  s     <- \(pi) s_gt(pi, threshold, smoothness)
-  s_dot <- \(pi) s_gt_dot(pi, threshold, smoothness)
+  s     <- \(pi) s_gte(pi, threshold, smoothness)
+  s_dot <- \(pi) s_gte_dot(pi, threshold, smoothness)
 
   integrand <- matrix(k(a_grid), ncol = length(a_grid), nrow = length(Y), byrow = TRUE) * mu * (-s_dot(pi) * pi + s(pi))
   z <- apply(integrand, 1, pracma::trapz, x = a_grid)
-  k(A) / pi_a * s(pi_a) * (Y - mu_a) + k(A) * mu_a * s_dot(pi_a) + z
+  k(A) / ifelse(pi_a == 0, 1e-8, pi_a) * s(pi_a) * (Y - mu_a) + k(A) * mu_a * s_dot(pi_a) + z
 }
 
 eif_cdrf_upper <- function(A, Y, mu, mu_a, pi, pi_a, a_grid, k, threshold, smoothness) {
-  s     <- \(pi) s_gt(pi, threshold, smoothness)
-  s_dot <- \(pi) s_gt_dot(pi, threshold, smoothness)
+  s     <- \(pi) s_gte(pi, threshold, smoothness)
+  s_dot <- \(pi) s_gte_dot(pi, threshold, smoothness)
 
   eifl <- eif_cdrf_lower(A, Y, mu, mu_a, pi, pi_a, a_grid, k, threshold, smoothness)
   integrand <- matrix(k(a_grid), ncol = length(a_grid), nrow = length(Y), byrow = TRUE) * (-s_dot(pi) * pi + s(pi))

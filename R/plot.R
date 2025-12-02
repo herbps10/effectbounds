@@ -79,7 +79,7 @@ plot.cdrfbounds <- function(x, smoothness = x$smoothness[1], point_estimate = FA
 
   if(any(is.na(ylim))) {
     #ylim <- range(unlist(lapply(x$bounds, \(bounds) range(c(bounds$lower_uniform, bounds$upper_uniform)))))
-    ylim <- range(unlist(lapply(x$bounds, \(bounds) range(c(bounds$lower_pointwise, bounds$upper_pointwise)))))
+    ylim <- range(unlist(lapply(x$bounds, \(bounds) range(c(apply(bounds$lower_pointwise, 2, max), apply(bounds$upper_pointwise, 2, min))))))
     if(point_estimate == TRUE) ylim <- range(c(x$onestep$lower, x$onestep$upper, ylim))
   }
 
@@ -103,10 +103,10 @@ plot.cdrfbounds <- function(x, smoothness = x$smoothness[1], point_estimate = FA
     graphics::lines(x = x$trt, y = x$onestep$lower, col = point_estimate_color)
     graphics::lines(x = x$trt, y = x$onestep$upper, col = point_estimate_color)
 
-    if(legend_position != "none") graphics::legend(legend_position, c(bound_title, tightest_title, "CDRF estimate and 95% CI"), fill = c(bounds_color, "gray", point_estimate_color))
+    if(legend_position != "none") graphics::legend(legend_position, c(bound_title, "CDRF estimate and 95% CI"), fill = c(bounds_color, point_estimate_color))
   }
   else {
-    if(legend_position != "none") graphics::legend(legend_position, c(bound_title, tightest_title), fill = c(bounds_color, "gray"))
+    if(legend_position != "none") graphics::legend(legend_position, c(bound_title), fill = c(bounds_color))
   }
 }
 
