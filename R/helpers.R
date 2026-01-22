@@ -1,15 +1,16 @@
 # Smooth approximation of the indicator function I[x > t] with smoothness gamma
 # Note that, by construction, s(x) <= I[x > t].
-s_gt <- function(x, t, gamma) ifelse(x - t <= 0, 0, ifelse(x - t >= 0 + gamma, 1, 1 - exp(1) * exp(1 / (((x - t) / gamma)^2 - 1))))
+s_gt <- function(x, t, gamma) ifelse(x - t <= 0, 0, ifelse(x - t >= 0 + gamma, 1, 1 - exp(1 + 1 / (((x - t) / gamma)^2 - 1))))
 
 # Derivative of smooth approximation of indicator function I[X > t] with smoothness gamma
 s_gt_dot <- function(x, t, gamma) {
-  ifelse(x - t <= 0, 0, ifelse(x - t >= 0 + gamma, 0, 2 * gamma^2 * exp(1 / ((t - x)^2 / gamma^2 - 1) + 1) * (x - t) / (gamma^2 - (t - x)^2)^2))
+  #ifelse(x - t <= 0, 0, ifelse(x - t >= 0 + gamma, 0, 2 * gamma^2 * exp(1 / ((t - x)^2 / gamma^2 - 1) + 1) * (x - t) / (gamma^2 - (t - x)^2)^2))
+  ifelse(x - t <= 0, 0, ifelse(x - t >= 0 + gamma, 0, (1 - s_gt(x, t, gamma)) * 2 * gamma^2 *(x - t) / (gamma^2 - (t - x)^2)^2))
 }
 
 # Smooth approximation of the indicator function I[x < t] with smoothness gamma
 # Note that, by construction, s(x) <= I[x < t]
-s_lt <- function(x, t, gamma) ifelse(x <= t - gamma, 1, ifelse(x >= t, 0,  1 - exp(1 / (((x - t) / gamma)^2 - 1))/ exp(-1)))
+s_lt <- function(x, t, gamma) ifelse(x <= t - gamma, 1, ifelse(x >= t, 0,  1 - exp(1 + 1 / (((x - t) / gamma)^2 - 1))))
 
 # Derivative of smooth approximation of indicator function I[X > t] with smoothness gamma
 s_lt_dot <- function(x, t, gamma) {
