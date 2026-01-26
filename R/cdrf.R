@@ -35,89 +35,70 @@ estimate_cdrf_nuisance <- function(data, X, A, Y, learners_trt, learners_outcome
   cv <- origami::make_folds(nrow(data), origami::folds_vfold, V = outer_folds)
   cv_control <- SuperLearner::SuperLearner.CV.control(V = inner_folds)
 
+  if(outer_folds == 1) {
+    cv[[1]]$training_set <- cv[[1]]$validation_set
+  }
+
   outcome_family <- stats::gaussian()
   if(all(data[[Y]] %in% c(0, 1))) outcome_family <- stats::binomial()
 
-  if(outer_folds > 1) {
-    for(fold in seq_along(cv)) {
-      training   <- cv[[fold]]$training_set
-      validation <- cv[[fold]]$validation_set
+  
 
-      a_model <- SuperLearner::SuperLearner(
-        Y = data[[A]][training],
-        X = data[training, X, drop = FALSE],
-        SL.library = learners_trt,
-        family = "gaussian",
-        cvControl = cv_control,
-        env = environment(SuperLearner::SuperLearner)
-      )
+  for(fold in seq_along(cv)) {
+    training   <- cv[[fold]]$training_set
+    validation <- cv[[fold]]$validation_set
 
-      squared_residuals <- (data[[A]][training] - a_model$SL.predict)^2
-
-      a2_model <- SuperLearner::SuperLearner(
-        Y = squared_residuals,
-        X = data[training, X, drop = FALSE],
-        SL.library = learners_trt,
-        family = "gaussian",
-        cvControl = cv_control,
-        env = environment(SuperLearner::SuperLearner)
-      )
-
-      a2_pred_train <- ifelse(a2_model$SL.predict >= 0, a2_model$SL.predict, 0)
-
-      a_std <- (data[[A]][training] - a_model$SL.predict) / sqrt(a2_pred_train)
-
-      pi_dens <- density(a_std[!is.na(a_std)])
-      pi_fun  <- approxfun(pi_dens$x, pi_dens$y, yleft = 0, yright = 0)
-      pi_hat_mat <- (matrix(pi_fun(((rep(a_grid, length(training)) - rep(a_model$SL.predict, each = length(a_grid)))) / rep(sqrt(a2_pred_train), each = length(a_grid))), ncol = length(a_grid), nrow = length(training), byrow = TRUE))
-      var_pi_fun <- approxfun(a_grid, colMeans(pi_hat_mat), rule = 2)
-
-      a_pred  <- SuperLearner::predict.SuperLearner(a_model, newdata = data[validation, X, drop = FALSE])$pred[, 1]
-      a2_pred <- SuperLearner::predict.SuperLearner(a2_model, newdata = data[validation, X, drop = FALSE])$pred[, 1]
-      a2_pred <- ifelse(a2_pred >= 0, a2_pred, 0)
-
-      pi_a_hat[validation] <- pi_fun((data[[A]][validation] - a_pred) / sqrt(a2_pred)) #/ var_pi_fun(data[[A]][validation])
-      a_std_validation <- ((rep(a_grid, length(validation)) - rep(a_pred, each = length(a_grid)))) / rep(sqrt(a2_pred), each = length(a_grid))
-      pi_hat[validation, ] <- (matrix(pi_fun(a_std_validation) / var_pi_fun(data[[A]][validation]), ncol = length(a_grid), nrow = length(validation), byrow = TRUE))
-
-      mu_model <- SuperLearner::SuperLearner(
-        Y = data[[Y]][training],
-        X = data[training, c(X, A), drop = FALSE],
-        SL.library = learners_outcome,
-        family = outcome_family,
-        cvControl = cv_control,
-        env = environment(SuperLearner::SuperLearner)
-      )
-
-      mu_a_hat[validation] <- SuperLearner::predict.SuperLearner(mu_model, newdata = data[validation, c(X, A)], onlySL = TRUE)$pred
-
-      dataA <- data[rep(validation, times = length(a_grid)), X, drop = FALSE]
-      dataA[[A]] <- rep(a_grid, each = length(validation))
-      mu_hat[validation, ] <- matrix(SuperLearner::predict.SuperLearner(mu_model, newdata = dataA, onlySL = TRUE)$pred, ncol = length(a_grid), nrow = length(validation))
-    }
-  }
-  else {
-    pi_model <- SuperLearner::SuperLearner(
-      Y = data[[A]],
-      X = data[, X, drop = FALSE],
+    a_model <- SuperLearner::SuperLearner(
+      Y = data[[A]][training],
+      X = data[training, X, drop = FALSE],
       SL.library = learners_trt,
+      family = "gaussian",
       cvControl = cv_control,
-      family = "binomial",
       env = environment(SuperLearner::SuperLearner)
     )
 
+    squared_residuals <- (data[[A]][training] - a_model$SL.predict)^2
+
+    a2_model <- SuperLearner::SuperLearner(
+      Y = squared_residuals,
+      X = data[training, X, drop = FALSE],
+      SL.library = learners_trt,
+      family = "gaussian",
+      cvControl = cv_control,
+      env = environment(SuperLearner::SuperLearner)
+    )
+
+    a2_pred_train <- ifelse(a2_model$SL.predict >= 0, a2_model$SL.predict, 0)
+
+    a_std <- (data[[A]][training] - a_model$SL.predict) / sqrt(a2_pred_train)
+
+    pi_dens <- density(a_std[!is.na(a_std)])
+    pi_fun  <- approxfun(pi_dens$x, pi_dens$y, yleft = 0, yright = 0)
+    pi_hat_mat <- (matrix(pi_fun(((rep(a_grid, length(training)) - rep(a_model$SL.predict, each = length(a_grid)))) / rep(sqrt(a2_pred_train), each = length(a_grid))), ncol = length(a_grid), nrow = length(training), byrow = TRUE))
+    var_pi_fun <- approxfun(a_grid, colMeans(pi_hat_mat), rule = 2)
+
+    a_pred  <- SuperLearner::predict.SuperLearner(a_model, newdata = data[validation, X, drop = FALSE])$pred[, 1]
+    a2_pred <- SuperLearner::predict.SuperLearner(a2_model, newdata = data[validation, X, drop = FALSE])$pred[, 1]
+    a2_pred <- ifelse(a2_pred >= 0, a2_pred, 0)
+
+    pi_a_hat[validation] <- pi_fun((data[[A]][validation] - a_pred) / sqrt(a2_pred)) #/ var_pi_fun(data[[A]][validation])
+    a_std_validation <- ((rep(a_grid, length(validation)) - rep(a_pred, each = length(a_grid)))) / rep(sqrt(a2_pred), each = length(a_grid))
+    pi_hat[validation, ] <- (matrix(pi_fun(a_std_validation) / var_pi_fun(data[[A]][validation]), ncol = length(a_grid), nrow = length(validation), byrow = TRUE))
+
     mu_model <- SuperLearner::SuperLearner(
-      Y = data[[Y]],
-      X = data[, c(X, A), drop = FALSE],
+      Y = data[[Y]][training],
+      X = data[training, c(X, A), drop = FALSE],
       SL.library = learners_outcome,
       family = outcome_family,
       cvControl = cv_control,
       env = environment(SuperLearner::SuperLearner)
     )
 
-    pi_hat  <- SuperLearner::predict.SuperLearner(pi_model, newdata = data, onlySL = TRUE)$pred
-    mu0_hat <- SuperLearner::predict.SuperLearner(mu_model, newdata = data0, onlySL = TRUE)$pred
-    mu1_hat <- SuperLearner::predict.SuperLearner(mu_model, newdata = data1, onlySL = TRUE)$pred
+    mu_a_hat[validation] <- SuperLearner::predict.SuperLearner(mu_model, newdata = data[validation, c(X, A)], onlySL = TRUE)$pred
+
+    dataA <- data[rep(validation, times = length(a_grid)), X, drop = FALSE]
+    dataA[[A]] <- rep(a_grid, each = length(validation))
+    mu_hat[validation, ] <- matrix(SuperLearner::predict.SuperLearner(mu_model, newdata = dataA, onlySL = TRUE)$pred, ncol = length(a_grid), nrow = length(validation))
   }
 
   #eps <- 1e-8
