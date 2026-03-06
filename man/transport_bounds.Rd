@@ -21,6 +21,7 @@ transport_bounds(
   alpha = 0.05,
   outer_folds = 5,
   inner_folds = 5,
+  stratify = FALSE,
   bootstrap = TRUE,
   bootstrap_draws = 1000,
   nuisance = NULL

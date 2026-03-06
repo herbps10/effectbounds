@@ -111,6 +111,7 @@ eif_transport_trimmed <- function(S, A, Y, mu0, mu1, phi, pi, threshold, smoothn
   plugin <- mean((S == 0) / mean(S == 0) * (mu1 * w1 - mu0 * w0))
 
   eif <- s1_weight * phi_weight * (A / pi * w1  - (1 - A) / (1 - pi) * w0) * (Y - mu)
+  eif <- ifelse(phi_weight == 0 | s1_weight == 0 | (A == 1 & w1 == 0) | (A == 0 & w0 == 0), 0, eif)
   eif <- eif + s1_weight * (1 - phi) * (mu1 * w1_dot + mu0 * w0_dot ) * (A - pi)
   eif <- eif + 1 / mean(S == 0) * (mu1 * w1_dot * pi - mu0 * w0_dot * (1 - pi)) * (S - phi)
   eif <- eif + s0_weight * (mu1 * w1 - mu0 * w0 - plugin)

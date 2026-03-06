@@ -1,5 +1,6 @@
 transport_onestep <- function(S, A, Y, nuisance) {
   plugin <- mean((nuisance$mu1_hat - nuisance$mu0_hat)[S == 0])
+  Y[S == 0] <- A[S == 0] <- nuisance$mu_hat[S == 0] <- 0
   eif <- with(nuisance, 1 / mean(S == 0) * (
     (1 - phi_hat) / phi_hat * (S == 1) * (A / pi_hat - (1 - A) / (1 - pi_hat)) * (Y - mu_hat) + (S == 0) * (mu1_hat - mu0_hat)
   ))# - plugin
@@ -17,28 +18,28 @@ transport_onestep <- function(S, A, Y, nuisance) {
   )
 }
 
-estimate_transport_nuisance <- function(data, X, S, A, Y, learners_trt, learners_source, learners_outcome, outer_folds, inner_folds, outcome_type) {
+estimate_transport_nuisance <- function(data, X, S, A, Y, learners_trt, learners_source, learners_outcome, outer_folds, inner_folds, outcome_type, stratify) {
   N <- nrow(data)
   data0 <- data1 <- data
   data0[[A]] <- 0
   data1[[A]] <- 1
   phi_hat <- pi_hat <- mu0_hat <- mu1_hat <- numeric(N)
 
-  cv <- origami::make_folds(nrow(data), origami::folds_vfold, V = outer_folds)
   cv_control <- SuperLearner::SuperLearner.CV.control(V = inner_folds)
+  cv_source <- origami::make_folds(sum(data[[S]] == 1), origami::folds_vfold, V = outer_folds)
+  cv_target <- origami::make_folds(sum(data[[S]] == 0), origami::folds_vfold, V = outer_folds)
 
   outcome_family <- stats::gaussian()
   if(all(data[[Y]] %in% c(0, 1))) outcome_family <- stats::binomial()
-
   if(outer_folds > 1) {
-    for(fold in seq_along(cv)) {
-      training   <- cv[[fold]]$training_set
-      validation <- cv[[fold]]$validation_set
+    for(fold in seq_along(cv_source)) {
+      cat(paste0("Fold: ", fold, "\n"))
+      training   <- which(data[[S]] == 1)[cv_source[[fold]]$training_set]
+      validation <- which(data[[S]] == 1)[cv_source[[fold]]$validation_set]
+      validation_target <- which(data[[S]] == 0)[cv_target[[fold]]$validation_set]
 
-      training_source <- training[which(data[[S]][training] == 1)]
-
-      phi_model <- SuperLearner::SuperLearner(
-        Y = data[[S]][training],
+      pi_model <- SuperLearner::SuperLearner(
+        Y = data[[A]][training],
         X = data[training, X, drop = FALSE],
         SL.library = learners_trt,
         family = "binomial",
@@ -46,40 +47,50 @@ estimate_transport_nuisance <- function(data, X, S, A, Y, learners_trt, learners
         env = environment(SuperLearner::SuperLearner)
       )
 
-      pi_model <- SuperLearner::SuperLearner(
-        Y = data[[A]][training_source],
-        X = data[training_source, X, drop = FALSE],
-        SL.library = learners_trt,
-        family = "binomial",
-        cvControl = cv_control,
-        env = environment(SuperLearner::SuperLearner)
-      )
+      pi_hat[c(validation, validation_target)]  <- SuperLearner::predict.SuperLearner(pi_model, newdata = data[c(validation, validation_target), X, drop = FALSE], onlySL = TRUE)$pred
 
-      mu_model <- SuperLearner::SuperLearner(
-        Y = data[[Y]][training_source],
-        X = data[training_source, c(X, A), drop = FALSE],
-        SL.library = learners_outcome,
-        family = outcome_family,
-        cvControl = cv_control,
-        env = environment(SuperLearner::SuperLearner)
-      )
+      if(stratify == TRUE) {
+        training0 <- training[which(data[[A]][training] == 0)]
+        training1 <- training[which(data[[A]][training] == 1)]
 
-      phi_hat[validation] <- SuperLearner::predict.SuperLearner(phi_model, newdata = data[validation, ], onlySL = TRUE)$pred
-      pi_hat[validation]  <- SuperLearner::predict.SuperLearner(pi_model, newdata = data[validation, ], onlySL = TRUE)$pred
-      mu0_hat[validation] <- SuperLearner::predict.SuperLearner(mu_model, newdata = data0[validation, ], onlySL = TRUE)$pred
-      mu1_hat[validation] <- SuperLearner::predict.SuperLearner(mu_model, newdata = data1[validation, ], onlySL = TRUE)$pred
+        mu0_model <- SuperLearner::SuperLearner(
+          Y = data[[Y]][training0],
+          X = data[training0, c(X), drop = FALSE],
+          SL.library = learners_outcome,
+          family = outcome_family,
+          cvControl = cv_control,
+          env = environment(SuperLearner::SuperLearner)
+        )
+
+        mu1_model <- SuperLearner::SuperLearner(
+          Y = data[[Y]][training1],
+          X = data[training1, c(X), drop = FALSE],
+          SL.library = learners_outcome,
+          family = outcome_family,
+          cvControl = cv_control,
+          env = environment(SuperLearner::SuperLearner)
+        )
+
+        mu0_hat[c(validation, validation_target)] <- SuperLearner::predict.SuperLearner(mu0_model, newdata = data[c(validation, validation_target), c(X), drop = FALSE], onlySL = TRUE)$pred
+        mu1_hat[c(validation, validation_target)] <- SuperLearner::predict.SuperLearner(mu1_model, newdata = data[c(validation, validation_target), c(X), drop = FALSE], onlySL = TRUE)$pred
+      }
+      else {
+        mu_model <- SuperLearner::SuperLearner(
+          Y = data[[Y]][training],
+          X = data[training, c(X, A), drop = FALSE],
+          SL.library = learners_outcome,
+          family = outcome_family,
+          cvControl = cv_control,
+          env = environment(SuperLearner::SuperLearner)
+        )
+        print(mu_model)
+        mu0_hat[c(validation, validation_target)] <- SuperLearner::predict.SuperLearner(mu_model, newdata = data0[c(validation, validation_target), c(X, A), drop = FALSE], onlySL = TRUE)$pred
+        mu1_hat[c(validation, validation_target)] <- SuperLearner::predict.SuperLearner(mu_model, newdata = data1[c(validation, validation_target), c(X, A), drop = FALSE], onlySL = TRUE)$pred
+      }
+
     }
   }
   else {
-    phi_model <- SuperLearner::SuperLearner(
-      Y = data[[S]],
-      X = data[, X, drop = FALSE],
-      SL.library = learners_trt,
-      cvControl = cv_control,
-      family = "binomial",
-      env = environment(SuperLearner::SuperLearner)
-    )
-
     pi_model <- SuperLearner::SuperLearner(
       Y = data[[A]][data[[S]] == 1],
       X = data[data[[S]] == 1, X, drop = FALSE],
@@ -98,12 +109,42 @@ estimate_transport_nuisance <- function(data, X, S, A, Y, learners_trt, learners
       env = environment(SuperLearner::SuperLearner)
     )
 
-    phi_hat <- SuperLearner::predict.SuperLearner(phi_model, newdata = data, onlySL = TRUE)$pred
     pi_hat  <- SuperLearner::predict.SuperLearner(pi_model, newdata = data, onlySL = TRUE)$pred
     mu0_hat <- SuperLearner::predict.SuperLearner(mu_model, newdata = data0, onlySL = TRUE)$pred
     mu1_hat <- SuperLearner::predict.SuperLearner(mu_model, newdata = data1, onlySL = TRUE)$pred
   }
   mu_hat <- ifelse(data[[A]] == 1, mu1_hat, mu0_hat)
+
+  if(outer_folds > 1) {
+    for(fold in seq_along(cv_target)) {
+      cat(paste0("Fold: ", fold, "\n"))
+      training   <- c(which(data[[S]] == 0)[cv_target[[fold]]$training_set],   which(data[[S]] == 1)[cv_source[[fold]]$training_set])
+      validation <- c(which(data[[S]] == 0)[cv_target[[fold]]$validation_set], which(data[[S]] == 1)[cv_source[[fold]]$validation_set])
+
+      phi_model <- SuperLearner::SuperLearner(
+        Y = data[[S]][training],
+        X = data[training, X, drop = FALSE],
+        SL.library = learners_trt,
+        family = "binomial",
+        cvControl = cv_control,
+        env = environment(SuperLearner::SuperLearner)
+      )
+      print(phi_model)
+      phi_hat[validation]  <- SuperLearner::predict.SuperLearner(phi_model, newdata = data[validation, X, drop = FALSE], onlySL = TRUE)$pred
+    }
+  }
+  else {
+    phi_model <- SuperLearner::SuperLearner(
+      Y = data[[S]],
+      X = data[, X, drop = FALSE],
+      SL.library = learners_trt,
+      cvControl = cv_control,
+      family = "binomial",
+      env = environment(SuperLearner::SuperLearner)
+    )
+
+    phi_hat <- SuperLearner::predict.SuperLearner(phi_model, newdata = data, onlySL = TRUE)$pred
+  }
 
   list(
     phi_hat = phi_hat,
@@ -366,7 +407,7 @@ tmle_smooth_transport <- function(S, A, Y, mu0, mu1, phi, pi, threshold, smoothn
 #' )
 #'
 #' @export
-transport_bounds <- function(data, X, S, A, Y, learners_trt = c("SL.glm"), learners_source = c("SL.glm"), learners_outcome = c("SL.glm"), thresholds = c(10^seq(-4, -1, 0.05)), smoothness = 1e-2, alpha = 0.05, outer_folds = 5, inner_folds = 5, bootstrap = TRUE, bootstrap_draws = 1e3, nuisance = NULL) {
+transport_bounds <- function(data, X, S, A, Y, learners_trt = c("SL.glm"), learners_source = c("SL.glm"), learners_outcome = c("SL.glm"), thresholds = c(10^seq(-4, -1, 0.05)), smoothness = 1e-2, alpha = 0.05, outer_folds = 5, inner_folds = 5, stratify = FALSE, bootstrap = TRUE, bootstrap_draws = 1e3, nuisance = NULL) {
   assert_ate_data(data, X, A, Y)
   assert_folds(outer_folds)
   assert_folds(inner_folds)
@@ -384,7 +425,7 @@ transport_bounds <- function(data, X, S, A, Y, learners_trt = c("SL.glm"), learn
     nuisance$mu_hat <- ifelse(data[[A]] == 1, nuisance$mu1_hat, nuisance$mu0_hat)
   }
   else {
-    nuisance <- estimate_transport_nuisance(data, X, S, A, Y, learners_trt, learners_source, learners_outcome, outer_folds, inner_folds)
+    nuisance <- estimate_transport_nuisance(data, X, S, A, Y, learners_trt, learners_source, learners_outcome, outer_folds, inner_folds, outcome_type, stratify)
   }
 
   results <- lapply(smoothness, \(smoothness) {
@@ -393,7 +434,6 @@ transport_bounds <- function(data, X, S, A, Y, learners_trt = c("SL.glm"), learn
     trimmed_ci  <- lower_ci  <- upper_ci  <- matrix(ncol = 2, nrow = K)
     trimmed_eif <- lower_eif <- upper_eif <- matrix(nrow = N, ncol = K)
 
-    # TMLE
     for(index in seq_along(thresholds)) {
       threshold <- thresholds[index]
 
@@ -466,3 +506,4 @@ transport_bounds <- function(data, X, S, A, Y, learners_trt = c("SL.glm"), learn
   class(out) <- "transportbounds"
   out
 }
+
