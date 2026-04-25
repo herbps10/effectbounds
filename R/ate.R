@@ -157,11 +157,11 @@ estimate_ate_nuisance <- function(
     )$pred
   }
 
-  minY <- min(data[[Y]])
-  maxY <- max(data[[Y]])
+  minY <- 1e-5
+  maxY <- 1 - 1e-5
 
-  mu0_hat <- ifelse(mu0_hat < 0, minY, ifelse(mu0_hat > 1, maxY, mu0_hat))
-  mu1_hat <- ifelse(mu1_hat < 0, minY, ifelse(mu1_hat > 1, maxY, mu1_hat))
+  mu0_hat <- ifelse(mu0_hat < minY, minY, ifelse(mu0_hat > maxY, maxY, mu0_hat))
+  mu1_hat <- ifelse(mu1_hat < minY, minY, ifelse(mu1_hat > maxY, maxY, mu1_hat))
   mu_hat <- ifelse(data[[A]] == 1, mu1_hat, mu0_hat)
 
   list(
