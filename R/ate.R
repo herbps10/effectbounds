@@ -1,10 +1,13 @@
 ate_onestep <- function(A, Y, nuisance) {
-  pi_hat  <- nuisance$pi_hat
+  pi_hat <- nuisance$pi_hat
   mu0_hat <- nuisance$mu0_hat
   mu1_hat <- nuisance$mu1_hat
   mu_hat <- ifelse(A == 1, mu1_hat, mu0_hat)
 
-  eif <- (A / pi_hat - (1 - A) / (1 - pi_hat)) * (Y - mu_hat) + mu1_hat - mu0_hat
+  eif <- (A / pi_hat - (1 - A) / (1 - pi_hat)) *
+    (Y - mu_hat) +
+    mu1_hat -
+    mu0_hat
   ate <- mean(eif)
   lower <- ate + stats::qnorm(0.025) * stats::sd(eif) / sqrt(length(Y))
   upper <- ate + stats::qnorm(0.975) * stats::sd(eif) / sqrt(length(Y))
@@ -18,7 +21,7 @@ ate_onestep <- function(A, Y, nuisance) {
 }
 
 ate_tmle <- function(A, Y, nuisance) {
-  pi_hat  <- nuisance$pi_hat
+  pi_hat <- nuisance$pi_hat
   mu0_hat <- nuisance$mu0_hat
   mu1_hat <- nuisance$mu1_hat
   mu_hat <- ifelse(A == 1, mu1_hat, mu0_hat)
@@ -27,7 +30,10 @@ ate_tmle <- function(A, Y, nuisance) {
   H1 <- -1 / (1 - pi_hat)
   H <- ifelse(A == 1, H1, H0)
 
-  fit <- stats::glm(Y ~ -1 + H + offset(stats::qlogis(mu_hat)), family = "binomial")
+  fit <- stats::glm(
+    Y ~ -1 + H + offset(stats::qlogis(mu_hat)),
+    family = "binomial"
+  )
   epsilon <- stats::coef(fit)[1]
 
   mu0_star <- stats::plogis(stats::qlogis(mu0_hat) + epsilon * H0)
@@ -35,7 +41,10 @@ ate_tmle <- function(A, Y, nuisance) {
   mu_star <- ifelse(A == 1, mu1_star, mu0_star)
 
   ate <- mean(mu1_hat - mu0_hat)
-  eif <- (A / pi_hat - (1 - A) / (1 - pi_hat)) * (Y - mu_star) + mu1_star - mu0_star
+  eif <- (A / pi_hat - (1 - A) / (1 - pi_hat)) *
+    (Y - mu_star) +
+    mu1_star -
+    mu0_star
   lower <- ate + stats::qnorm(0.025) * stats::sd(eif) / sqrt(length(Y))
   upper <- ate + stats::qnorm(0.975) * stats::sd(eif) / sqrt(length(Y))
 
@@ -48,7 +57,17 @@ ate_tmle <- function(A, Y, nuisance) {
 }
 
 
-estimate_ate_nuisance <- function(data, X, A, Y, learners_trt, learners_outcome, outer_folds, inner_folds, outcome_type) {
+estimate_ate_nuisance <- function(
+  data,
+  X,
+  A,
+  Y,
+  learners_trt,
+  learners_outcome,
+  outer_folds,
+  inner_folds,
+  outcome_type
+) {
   N <- nrow(data)
   data0 <- data1 <- data
   data0[[A]] <- 0
@@ -59,11 +78,13 @@ estimate_ate_nuisance <- function(data, X, A, Y, learners_trt, learners_outcome,
   cv_control <- SuperLearner::SuperLearner.CV.control(V = inner_folds)
 
   outcome_family <- stats::gaussian()
-  if(all(data[[Y]] %in% c(0, 1))) outcome_family <- stats::binomial()
+  if (all(data[[Y]] %in% c(0, 1))) {
+    outcome_family <- stats::binomial()
+  }
 
-  if(outer_folds > 1) {
-    for(fold in seq_along(cv)) {
-      training   <- cv[[fold]]$training_set
+  if (outer_folds > 1) {
+    for (fold in seq_along(cv)) {
+      training <- cv[[fold]]$training_set
       validation <- cv[[fold]]$validation_set
 
       pi_model <- SuperLearner::SuperLearner(
@@ -84,12 +105,23 @@ estimate_ate_nuisance <- function(data, X, A, Y, learners_trt, learners_outcome,
         env = environment(SuperLearner::SuperLearner)
       )
 
-      pi_hat[validation]  <- SuperLearner::predict.SuperLearner(pi_model, newdata = data[validation, c(X), drop = FALSE], onlySL = TRUE)$pred
-      mu0_hat[validation] <- SuperLearner::predict.SuperLearner(mu_model, newdata = data0[validation, c(X, A)], onlySL = TRUE)$pred
-      mu1_hat[validation] <- SuperLearner::predict.SuperLearner(mu_model, newdata = data1[validation, c(X, A)], onlySL = TRUE)$pred
+      pi_hat[validation] <- SuperLearner::predict.SuperLearner(
+        pi_model,
+        newdata = data[validation, c(X), drop = FALSE],
+        onlySL = TRUE
+      )$pred
+      mu0_hat[validation] <- SuperLearner::predict.SuperLearner(
+        mu_model,
+        newdata = data0[validation, c(X, A)],
+        onlySL = TRUE
+      )$pred
+      mu1_hat[validation] <- SuperLearner::predict.SuperLearner(
+        mu_model,
+        newdata = data1[validation, c(X, A)],
+        onlySL = TRUE
+      )$pred
     }
-  }
-  else {
+  } else {
     pi_model <- SuperLearner::SuperLearner(
       Y = data[[A]],
       X = data[, X, drop = FALSE],
@@ -108,10 +140,28 @@ estimate_ate_nuisance <- function(data, X, A, Y, learners_trt, learners_outcome,
       env = environment(SuperLearner::SuperLearner)
     )
 
-    pi_hat  <- SuperLearner::predict.SuperLearner(pi_model, newdata = data, onlySL = TRUE)$pred
-    mu0_hat <- SuperLearner::predict.SuperLearner(mu_model, newdata = data0, onlySL = TRUE)$pred
-    mu1_hat <- SuperLearner::predict.SuperLearner(mu_model, newdata = data1, onlySL = TRUE)$pred
+    pi_hat <- SuperLearner::predict.SuperLearner(
+      pi_model,
+      newdata = data,
+      onlySL = TRUE
+    )$pred
+    mu0_hat <- SuperLearner::predict.SuperLearner(
+      mu_model,
+      newdata = data0,
+      onlySL = TRUE
+    )$pred
+    mu1_hat <- SuperLearner::predict.SuperLearner(
+      mu_model,
+      newdata = data1,
+      onlySL = TRUE
+    )$pred
   }
+
+  minY <- min(data[[Y]])
+  maxY <- max(data[[Y]])
+
+  mu0_hat <- ifelse(mu0_hat < 0, minY, ifelse(mu0_hat > 1, maxY, mu0_hat))
+  mu1_hat <- ifelse(mu1_hat < 0, minY, ifelse(mu1_hat > 1, maxY, mu1_hat))
   mu_hat <- ifelse(data[[A]] == 1, mu1_hat, mu0_hat)
 
   list(
@@ -123,59 +173,106 @@ estimate_ate_nuisance <- function(data, X, A, Y, learners_trt, learners_outcome,
 }
 
 # TMLE algorithm for non-overlap ATE bound parameters
-tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter = "trimmed", maxiter = 25, verbose = FALSE) {
+tmle_smooth_ate <- function(
+  A,
+  Y,
+  mu0,
+  mu1,
+  pi,
+  threshold,
+  smoothness,
+  parameter = "trimmed",
+  maxiter = 25,
+  verbose = FALSE
+) {
   fluctuation <- \(epsilon, mu0, mu1, pi) {
     cleverA <- rep(0, length(pi))
-    if(smoothness > 0) {
-      cleverA <- (mu1 * s_gt_dot(pi, threshold, smoothness) - mu0 * s_lt_dot(pi, 1 - threshold, smoothness))
-      if(parameter == "lower") cleverA <- cleverA + s_lt_dot(pi, 1 - threshold, smoothness)
-      if(parameter == "upper") cleverA <- cleverA - s_gt_dot(pi, threshold, smoothness)
+    if (smoothness > 0) {
+      cleverA <- (mu1 *
+        s_gt_dot(pi, threshold, smoothness) -
+        mu0 * s_lt_dot(pi, 1 - threshold, smoothness))
+      if (parameter == "lower") {
+        cleverA <- cleverA + s_lt_dot(pi, 1 - threshold, smoothness)
+      }
+      if (parameter == "upper") {
+        cleverA <- cleverA - s_gt_dot(pi, threshold, smoothness)
+      }
     }
 
     list(
-      mu0 = stats::plogis(stats::qlogis(mu0) - epsilon / (1 - pi) * s_lt(pi, 1 - threshold, smoothness)),
-      mu1 = stats::plogis(stats::qlogis(mu1) + epsilon / pi * s_gt(pi, threshold, smoothness)),
-      pi  = stats::plogis(stats::qlogis(pi)  + epsilon * cleverA)
+      mu0 = stats::plogis(
+        stats::qlogis(mu0) -
+          epsilon / (1 - pi) * s_lt(pi, 1 - threshold, smoothness)
+      ),
+      mu1 = stats::plogis(
+        stats::qlogis(mu1) + epsilon / pi * s_gt(pi, threshold, smoothness)
+      ),
+      pi = stats::plogis(stats::qlogis(pi) + epsilon * cleverA)
     )
   }
 
   loss <- \(params, mu0, mu1, pi) {
     f <- fluctuation(params, mu0, mu1, pi)
     x <- mean(
-      -A * log(f$pi) - (1 - A) * log(1 - f$pi) + ifelse(A == 1, -Y * log(f$mu1) - (1 - Y) * log(1 - f$mu1), -Y * log(f$mu0) - (1 - Y) * log(1 - f$mu0))
+      -A *
+        log(f$pi) -
+        (1 - A) * log(1 - f$pi) +
+        ifelse(
+          A == 1,
+          -Y * log(f$mu1) - (1 - Y) * log(1 - f$mu1),
+          -Y * log(f$mu0) - (1 - Y) * log(1 - f$mu0)
+        )
     )
-    if(is.infinite(x) || is.nan(x)) return(Inf)
+    if (is.infinite(x) || is.nan(x)) {
+      return(Inf)
+    }
     x
   }
 
   # Start at initial estimators
   mu0_star <- mu0
   mu1_star <- mu1
-  pi_star  <- pi
+  pi_star <- pi
   converged <- FALSE
-  for(iter in 1:maxiter) {
+  for (iter in 1:maxiter) {
     # evaluate loss at bounds
     left_bound <- c(-0.1)
     right_bound <- 0.1
-    if(is.infinite(loss(0, mu0_star, mu1_star, pi_star))) stop("Infinite loss")
-    while(is.infinite(loss(left_bound, mu0_star, mu1_star, pi_star))) left_bound <- left_bound / 2
-    while(is.infinite(loss(right_bound, mu0_star, mu1_star, pi_star))) right_bound <- right_bound / 2
+    if (is.infinite(loss(0, mu0_star, mu1_star, pi_star))) {
+      stop("Infinite loss")
+    }
+    while (is.infinite(loss(left_bound, mu0_star, mu1_star, pi_star))) {
+      left_bound <- left_bound / 2
+    }
+    while (is.infinite(loss(right_bound, mu0_star, mu1_star, pi_star))) {
+      right_bound <- right_bound / 2
+    }
 
-    epsilon_star <- stats::optimize(loss, interval = c(left_bound, right_bound), mu0 = mu0_star, mu1 = mu1_star, pi = pi_star)$minimum
+    epsilon_star <- stats::optimize(
+      loss,
+      interval = c(left_bound, right_bound),
+      mu0 = mu0_star,
+      mu1 = mu1_star,
+      pi = pi_star
+    )$minimum
     f <- fluctuation(epsilon_star, mu0_star, mu1_star, pi_star)
 
     mu0_star <- f$mu0
     mu1_star <- f$mu1
-    pi_star  <- f$pi
+    pi_star <- f$pi
 
-    if(verbose) cat(glue::glue("Iter: {iter} epsilon_star: {epsilon_star} smoothness: {smoothness} threshold: {threshold} bounds: ({left_bound}, {right_bound}) \n\n"))
+    if (verbose) {
+      cat(glue::glue(
+        "Iter: {iter} epsilon_star: {epsilon_star} smoothness: {smoothness} threshold: {threshold} bounds: ({left_bound}, {right_bound}) \n\n"
+      ))
+    }
 
-    if(abs(epsilon_star) < 1e-2) {
+    if (abs(epsilon_star) < 1e-2) {
       converged <- TRUE
       break
     }
   }
-  if(converged == FALSE) {
+  if (converged == FALSE) {
     warning("TMLE Failed to converge")
     return(list(
       psi = NA,
@@ -187,17 +284,19 @@ tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter
     ))
   }
 
-  psi_trimmed <- mean(mu1_star * s_gt(pi_star, threshold, smoothness) - mu0_star * s_lt(pi_star, 1 - threshold, smoothness))
+  psi_trimmed <- mean(
+    mu1_star *
+      s_gt(pi_star, threshold, smoothness) -
+      mu0_star * s_lt(pi_star, 1 - threshold, smoothness)
+  )
 
-  if(parameter == "trimmed") {
+  if (parameter == "trimmed") {
     psi <- psi_trimmed
     eif <- eif_trimmed(A, Y, mu0_star, mu1_star, pi_star, threshold, smoothness)
-  }
-  else if(parameter == "upper") {
+  } else if (parameter == "upper") {
     psi <- psi_trimmed + 1 - mean(s_gt(pi_star, threshold, smoothness))
     eif <- eif_upper(A, Y, mu0_star, mu1_star, pi_star, threshold, smoothness)
-  }
-  else if(parameter == "lower") {
+  } else if (parameter == "lower") {
     psi <- psi_trimmed - 1 + mean(s_lt(pi_star, 1 - threshold, smoothness))
     eif <- eif_lower(A, Y, mu0_star, mu1_star, pi_star, threshold, smoothness)
   }
@@ -317,7 +416,22 @@ tmle_smooth_ate <- function(A, Y, mu0, mu1, pi, threshold, smoothness, parameter
 #' )
 #'
 #' @export
-ate_bounds <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outcome = c("SL.glm"), thresholds = c(10^seq(-4, -1, 0.05)), smoothness = 1e-2, alpha = 0.05, outer_folds = 5, inner_folds = 5, bootstrap = TRUE, bootstrap_draws = 1e3, nuisance = NULL) {
+ate_bounds <- function(
+  data,
+  X,
+  A,
+  Y,
+  learners_trt = c("SL.glm"),
+  learners_outcome = c("SL.glm"),
+  thresholds = c(10^seq(-4, -1, 0.05)),
+  smoothness = 1e-2,
+  alpha = 0.05,
+  outer_folds = 5,
+  inner_folds = 5,
+  bootstrap = TRUE,
+  bootstrap_draws = 1e3,
+  nuisance = NULL
+) {
   assert_ate_data(data, X, A, Y)
   assert_folds(outer_folds)
   assert_folds(inner_folds)
@@ -330,42 +444,81 @@ ate_bounds <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outco
   N <- nrow(data)
 
   # Cross-fitted nuisance models
-  if(!is.null(nuisance)) {
+  if (!is.null(nuisance)) {
     assert_ate_nuisance(nuisance, N)
-    nuisance$mu_hat <- ifelse(data[[A]] == 1, nuisance$mu1_hat, nuisance$mu0_hat)
-  }
-  else {
-    nuisance <- estimate_ate_nuisance(data, X, A, Y, learners_trt, learners_outcome, outer_folds, inner_folds)
+    nuisance$mu_hat <- ifelse(
+      data[[A]] == 1,
+      nuisance$mu1_hat,
+      nuisance$mu0_hat
+    )
+  } else {
+    nuisance <- estimate_ate_nuisance(
+      data,
+      X,
+      A,
+      Y,
+      learners_trt,
+      learners_outcome,
+      outer_folds,
+      inner_folds
+    )
   }
 
   results <- lapply(smoothness, \(smoothness) {
     # Set up output
-    trimmed     <- lower     <- upper     <- numeric(K)
-    trimmed_ci  <- lower_ci  <- upper_ci  <- matrix(ncol = 2, nrow = K)
+    trimmed <- lower <- upper <- numeric(K)
+    trimmed_ci <- lower_ci <- upper_ci <- matrix(ncol = 2, nrow = K)
     trimmed_eif <- lower_eif <- upper_eif <- matrix(nrow = N, ncol = K)
 
     # TMLE
-    for(index in seq_along(thresholds)) {
+    for (index in seq_along(thresholds)) {
       threshold <- thresholds[index]
 
-      tmle_lower   <- tmle_smooth_ate(data[[A]], data[[Y]], nuisance$mu0_hat, nuisance$mu1_hat, nuisance$pi_hat, threshold, smoothness, parameter = "lower")
-      tmle_upper   <- tmle_smooth_ate(data[[A]], data[[Y]], nuisance$mu0_hat, nuisance$mu1_hat, nuisance$pi_hat, threshold, smoothness, parameter = "upper")
-      tmle_trimmed <- tmle_smooth_ate(data[[A]], data[[Y]], nuisance$mu0_hat, nuisance$mu1_hat, nuisance$pi_hat, threshold, smoothness, parameter = "trimmed")
+      tmle_lower <- tmle_smooth_ate(
+        data[[A]],
+        data[[Y]],
+        nuisance$mu0_hat,
+        nuisance$mu1_hat,
+        nuisance$pi_hat,
+        threshold,
+        smoothness,
+        parameter = "lower"
+      )
+      tmle_upper <- tmle_smooth_ate(
+        data[[A]],
+        data[[Y]],
+        nuisance$mu0_hat,
+        nuisance$mu1_hat,
+        nuisance$pi_hat,
+        threshold,
+        smoothness,
+        parameter = "upper"
+      )
+      tmle_trimmed <- tmle_smooth_ate(
+        data[[A]],
+        data[[Y]],
+        nuisance$mu0_hat,
+        nuisance$mu1_hat,
+        nuisance$pi_hat,
+        threshold,
+        smoothness,
+        parameter = "trimmed"
+      )
 
       trimmed[index] <- tmle_trimmed$psi
-      lower[index]   <- tmle_lower$psi
-      upper[index]   <- tmle_upper$psi
+      lower[index] <- tmle_lower$psi
+      upper[index] <- tmle_upper$psi
 
       trimmed_eif[, index] <- tmle_trimmed$eif
-      lower_eif[, index]   <- tmle_lower$eif
-      upper_eif[, index]   <- tmle_upper$eif
+      lower_eif[, index] <- tmle_lower$eif
+      upper_eif[, index] <- tmle_upper$eif
 
       trimmed_ci[index, 1] <- tmle_trimmed$ci[1]
       trimmed_ci[index, 2] <- tmle_trimmed$ci[2]
-      lower_ci[index, 1]   <- tmle_lower$ci[1]
-      lower_ci[index, 2]   <- tmle_lower$ci[2]
-      upper_ci[index, 1]   <- tmle_upper$ci[1]
-      upper_ci[index, 2]   <- tmle_upper$ci[2]
+      lower_ci[index, 1] <- tmle_lower$ci[1]
+      lower_ci[index, 2] <- tmle_lower$ci[2]
+      upper_ci[index, 1] <- tmle_upper$ci[1]
+      upper_ci[index, 2] <- tmle_upper$ci[2]
     }
 
     list(
@@ -380,7 +533,7 @@ ate_bounds <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outco
   })
 
   uniform_critical_value <- NA
-  if(bootstrap == TRUE) {
+  if (bootstrap == TRUE) {
     # Multiplier bootstrap
 
     uniform_ci <- matrix(NA, K * length(smoothness), 2)
@@ -391,11 +544,18 @@ ate_bounds <- function(data, X, A, Y, learners_trt = c("SL.glm"), learners_outco
     lower_eif <- do.call(cbind, lapply(results, `[[`, "lower_eif"))
     upper_eif <- do.call(cbind, lapply(results, `[[`, "upper_eif"))
 
-    uniform_ci <- multiplier_bootstrap(lower, upper, lower_eif, upper_eif, draws = bootstrap_draws, alpha = alpha)
+    uniform_ci <- multiplier_bootstrap(
+      lower,
+      upper,
+      lower_eif,
+      upper_eif,
+      draws = bootstrap_draws,
+      alpha = alpha
+    )
 
     uniform_critical_value <- uniform_ci$critical_value
 
-    for(index in seq_along(smoothness)) {
+    for (index in seq_along(smoothness)) {
       ri <- ((index - 1) * K + 1):(index * K)
       results[[index]]$lower_uniform <- uniform_ci$ci[ri, 1]
       results[[index]]$upper_uniform <- uniform_ci$ci[ri, 2]
