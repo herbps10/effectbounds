@@ -16,6 +16,12 @@ s_lt_dot <- function(x, t, gamma) {
   ifelse(x <= t - gamma, 0, ifelse(x >= t, 0, 2 * gamma^2 * exp(1 / ((t - x)^2 / gamma^2 - 1) + 1) * (x - t) / (gamma^2 - (t - x)^2)^2))
 }
 
+s <- function(x, t, gamma) {
+  s_gt(x, t - gamma/2, gamma) * s_lt(x, 1 - t + gamma/2, gamma)
+}
+
+# Smooth approximation of the indicator function I[c >]
+
 #' Compute one-step estimator for one-dimensional target parameter
 #'
 #' @param plugin plugin point estimate
